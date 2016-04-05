@@ -1,6 +1,24 @@
 library(ggplot2)
 library(ggmap)
 library(gridExtra)
+library(rgl)
+
+colorBarPlot <- function(value,color,nticks=5,title=""){
+	# value and color are already sorted from min to max and is 31 levels by default. nticks = 5
+
+	scale = (length(color)-1)/(max(value)-min(value))
+	ticks=seq(min(value), max(value), len=11)
+	par(mar=c(1,3,1,1))
+	plot(c(0,2), c(min(value),max(value)), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
+	axis(2, ticks, las=1)
+	
+	for (i in 1:(length(color)-1)) {
+		y = (i-1)/scale + min(value)
+    	rect(0,y,10,y+1/scale, col=color[i], border=NA)
+    }	
+}
+
+
 plot_raw <- function(Triaxus,var){
 	visdata <- Triaxus@cleanData[,c(var,"distance","depth")]
 	colorRange <- range(c(range(Triaxus@cleanData[,var],na.rm = TRUE),range(Triaxus@resultData[,var],na.rm = TRUE)))
@@ -123,7 +141,7 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 		# plot the dot of riverMonth
 		# riverMonth: list(river1,river2),river1=c(c1,c2)
 		print("print riverMouth")
-		for(i in 1:length(riverMouth))
+		for(i in 1:length(additionalArgs$riverMouth))
     		plot3d(0,additionalArgs$riverMouth[[i]][2],additionalArgs$riverMouth[[i]][1],add=T,size=10,col="red")
 	}
 }

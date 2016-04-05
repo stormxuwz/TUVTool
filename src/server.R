@@ -9,23 +9,17 @@ library(RColorBrewer)
 library(rgl)
 library(rglwidget)
 library(ggplot2)
-source("./source/plot.R")
+source("plot.R")
 library(plotly)
 library(dplyr)
-source("./source/config.R")
-source("./source/Triaxus_class.R")
-source("./source/preprocessing.R")
-source("./source/interpolation.R")
-source("./source/hotspot.R")
-source("./source/clustering.R")
+source("config.R")
+source("Triaxus_class.R")
+source("preprocessing.R")
+source("interpolation.R")
+source("hotspot.R")
+source("clustering.R")
+source("misc.R")
 
-changeLatLong <- function(number){
-	temp=as.character(number)
-	left=as.numeric(substr(temp,1,2))
-	right=as.numeric(substr(temp,3,nchar(number)))/60
-	newnumber=left+right
-	return(newnumber)
-}
 
 # color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), title='') {
 # 	scale = (length(lut)-1)/(max-min)
@@ -38,21 +32,6 @@ changeLatLong <- function(number){
 #     }	
 # }
 
-
-colorBarPlot <- function(value,color,nticks=5,title=""){
-	# value and color are already sorted from min to max and is 31 levels by default. nticks = 5
-
-	scale = (length(color)-1)/(max(value)-min(value))
-	ticks=seq(min(value), max(value), len=11)
-	par(mar=c(1,3,1,1))
-	plot(c(0,2), c(min(value),max(value)), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
-	axis(2, ticks, las=1)
-	
-	for (i in 1:(length(color)-1)) {
-		y = (i-1)/scale + min(value)
-    	rect(0,y,10,y+1/scale, col=color[i], border=NA)
-    }	
-}
 
 
 # colorBarPlot <- function(value,color,title=""){

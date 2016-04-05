@@ -11,3 +11,12 @@ applyScale <- function(x,y,scaleSetting){
 		sy = (y - scaleSetting$y[1])/scaleSetting$y[2])
 	)
 }
+
+
+changeLatLong <- function(number){
+	temp=as.character(number)
+	left=as.numeric(substr(temp,1,2))
+	right=as.numeric(substr(temp,3,nchar(number)))/60
+	newnumber=left+right
+	return(newnumber)
+}

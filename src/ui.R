@@ -5,7 +5,7 @@ library(RColorBrewer)
 library(rgl)
 library(rglwidget)
 library(plotly)
-source("source/config.R")
+source("config.R")
 
 shinyUI(
 	navbarPage("TRIAXUS",
