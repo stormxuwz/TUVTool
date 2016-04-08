@@ -14,7 +14,7 @@ preprocessing <- function(Triaxus){
 	seabirdIndex <- Triaxus@SeabirdAnchorIndex
 	bbeIndex <- Triaxus@BBEAnchorIndex
 	
-	Triaxus@rawData <- initProcess(Triaxus@rawData,config$rename)
+	Triaxus@rawData <- initProcess(Triaxus@rawData)
 	BBE_name <- Triaxus@config$BBE_name
 	Seabird_name <- Triaxus@config$Seabird_name
 
@@ -59,10 +59,10 @@ preprocessing <- function(Triaxus){
 
 
 
-initProcess <- function(dataSet,renameArray){
+initProcess <- function(dataSet){
 	# dataSet <- na.omit(dataSet)
 	dataSet <- dplyr::select(dataSet,-c(latitude,longitude,ShpSpd_Cmputd,scan.count,pressure,DO.optode,optode.T))
-	dataSet <- rename(dataSet,BBE_depth=depth.1,Seabird_depth=depth,Seabird_temperature=temp,
+	dataSet <- dplyr::rename(dataSet,BBE_depth=depth.1,Seabird_depth=depth,Seabird_temperature=temp,
 		BBE_temperature=temp.1,distance=Distance,DO=DO.43.mg.L,DOsat=DO43...sat,latitude=DDLat,longitude=DDLong)
 	
 	if("Zdens" %in% names(dataSet)){

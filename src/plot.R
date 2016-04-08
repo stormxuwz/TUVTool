@@ -7,17 +7,26 @@ colorBarPlot <- function(value,color,nticks=5,title=""){
 	# value and color are already sorted from min to max and is 31 levels by default. nticks = 5
 
 	scale = (length(color)-1)/(max(value)-min(value))
-	ticks=seq(min(value), max(value), len=11)
-	par(mar=c(1,3,1,1))
+	ticks=seq(min(value), max(value), len=nticks)
+	par(mar=c(1,4,1,1))
 	plot(c(0,2), c(min(value),max(value)), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
 	axis(2, ticks, las=1)
 	
 	for (i in 1:(length(color)-1)) {
 		y = (i-1)/scale + min(value)
-    	rect(0,y,10,y+1/scale, col=color[i], border=NA)
+    	rect(0,y,2,y+1/scale, col=color[i], border=NA)
     }	
 }
 
+colorBarPlot_cluster <- function(value,color,title=""){
+	plot(c(0,2), c(0,max(value)+0.5), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
+	ticks=value
+	axis(2, ticks, las=1)
+	for (i in 1:length(value)) {
+		y = i
+    	rect(0,y-0.5,2,y+0.5, col=color[i], border=NA)
+    }	
+}
 
 plot_raw <- function(Triaxus,var){
 	visdata <- Triaxus@cleanData[,c(var,"distance","depth")]
@@ -63,16 +72,19 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 	
 	for(subData in dataList){
 		allVar <- c(allVar,subData[,"val"])
-		geoLocation <- rbind(geoLocation,subData[,c("longitude","latitude")])
+		geoLocation <- rbind(geoLocation,subData[,c("longitude","latitude","depth")])
 	}
 	
 	print(summary(allVar))
 	if(isFactor){
+			coloPal <- config$factorColor
 			if(hotspot){
-				coloPal <- colorFactor(palette = c("blue","white","Red"),as.factor(c(-1,0,1)),na.color =NA)
+				factorLevels <- levels(factor(c(-1,0,1)))
 			}
 			else{
-				coloPal <- colorFactor(topo.colors(5), allVar,na.color = NA)
+				allVar <- factor(allVar)
+				# coloPal <- colorFactor(topo.colors(5), allVar,na.color = NA)
+				factorLevels <- levels(allVar)
 			}
 			# print("coloPal is a factor coloPal")
 		}else{
@@ -80,44 +92,18 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 			coloPal <- colorNumeric(topo.colors(10), c(floor(varRange[1]),ceiling(varRange[2])))
 	}
 
+	bbox <- ggmap::make_bbox(geoLocation$longitude,geoLocation$latitude,f=0.2)
+	print(bbox)
 	open3d()
-	for(i in 1:length(dataList)){
-		rgldata <- dataList[[i]]
 
-		x_tmp <- unique(rgldata$depth)
-		y_tmp <- rgldata$latitude[1:(nrow(rgldata)/length(x_tmp))]
-		
-		# rgldata <- dplyr::arrange(rgldata,depth,latitude)
+	# Plot the bounding box
+	xRange <- range(geoLocation$depth,na.rm=TRUE)
+	yRange <- c(bbox[2],bbox[4])
+	zRange <- c(bbox[1],bbox[3])
+	boxPoints <- expand.grid(list(x=xRange,y=yRange,z=zRange))
+	plot3d(boxPoints$x,boxPoints$y,boxPoints$z,alpha=0,xlab="",ylab="",zlab="",box=F)
 
-		x <- rgldata$depth
-		y <- rgldata$latitude
-		z <- rgldata$longitude
-
-		varVal <- rgldata[,"val"]
-		naIndex <- is.na(varVal)
-		if(isFactor){
-			varVal <- as.factor(varVal)
-		}
-
-		if(i==1){
-		  plot3d(x,y,z,alpha=0,xlab="",ylab="",zlab="",box=F)
-		  aspect3d(0.8,1,0.5)
-		}
-		
-		# print(summary(varVal))
-		valColor <- coloPal(varVal)
-		# z[naIndex] <- NA
-		z_tmp <- t(matrix(z,length(y_tmp),length(x_tmp)))
-		col_tmp <- t(matrix(valColor,length(y_tmp),length(x_tmp)))
-		surface3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
-		# persp3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
-	}
-	rgl.viewpoint(zoom = .8)
-	par3d(userMatrix=transmatrix,windowRect=c(720,0,1920,1200),cex=0.0001)
-
-
-	# Create the map cap
-	bbox <- ggmap::make_bbox(geoLocation$longitude,geoLocation$latitude,f=0.02)
+	# Plot the map
 	triaxusPath.map <- get_map(location = bbox, maptype="watercolor", source="stamen",zoom=9)
 	coor=attr(triaxusPath.map,"bb")
 	numY=dim(triaxusPath.map)[1]
@@ -137,6 +123,7 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 
 	surface3d(geox,geoy,geoz,col=geocol,add=T,lit=F,alpha=0.3)
 
+	# Plot the river mouth
 	if(!is.null(additionalArgs$riverMouth)){
 		# plot the dot of riverMonth
 		# riverMonth: list(river1,river2),river1=c(c1,c2)
@@ -144,6 +131,45 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 		for(i in 1:length(additionalArgs$riverMouth))
     		plot3d(0,additionalArgs$riverMouth[[i]][2],additionalArgs$riverMouth[[i]][1],add=T,size=10,col="red")
 	}
+
+
+	for(i in 1:length(dataList)){
+		rgldata <- dataList[[i]]
+
+		x_tmp <- unique(rgldata$depth)
+		y_tmp <- rgldata$latitude[1:(nrow(rgldata)/length(x_tmp))]
+		
+		# rgldata <- dplyr::arrange(rgldata,depth,latitude)
+
+		x <- rgldata$depth
+		y <- rgldata$latitude
+		z <- rgldata$longitude
+
+		varVal <- rgldata[,"val"]
+		naIndex <- is.na(varVal)
+		
+		if(isFactor){
+			# varVal <- factor(varVal,levels=factorLevels)
+			varVal <- as.character(varVal)
+		}
+
+		# if(i==1){
+		  # plot3d(x,y,z,alpha=0,xlab="",ylab="",zlab="",box=F)
+		# }
+		
+		# print(summary(varVal))
+		# print(varVal)
+		valColor <- coloPal(varVal)
+		#z[naIndex] <- NA
+		z_tmp <- t(matrix(z,length(y_tmp),length(x_tmp)))
+		col_tmp <- t(matrix(valColor,length(y_tmp),length(x_tmp)))
+		surface3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
+		# persp3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
+	}
+	rgl.viewpoint(zoom = .8)
+	par3d(userMatrix=transmatrix,windowRect=c(720,0,1920,1200),cex=1)
+	aspect3d(c(0.65,1,1))	
+	
 }
 
 plot_3d_value <- function(allTriaxus,var,...){
@@ -177,7 +203,7 @@ plot_3d_clustering <- function(allTriaxus,K,...){
 	dataList <- list()
 	for(myTriaxus in allTriaxus){
 		dataList[[myTriaxus@pathName]] <- myTriaxus@grid[,c("longitude","latitude","depth")]
-		dataList[[myTriaxus@pathName]][,"val"] <- as.factor(myTriaxus@clusteringResults$clusteringIndex[[clusterName]])
+		dataList[[myTriaxus@pathName]][,"val"] <- myTriaxus@clusteringResults$clusteringIndex[[clusterName]]
 	}
 
 	plot_3d_base(dataList,TRUE,FALSE,...)
@@ -194,11 +220,14 @@ plot_boxplot <- function(allTriaxus,variables,K){
 	}
 
 	totalData$cluster <- factor(totalData$cluster)
-	plot_theme=theme(axis.title.x=element_blank(),axis.text.x=element_text(size=6.5,face="bold"),axis.title.y=element_text(size=6.5,face="bold"),
+	
+	plot_theme <- theme(axis.title.x=element_blank(),axis.text.x=element_text(size=6.5,face="bold"),axis.title.y=element_text(size=6.5,face="bold"),
       axis.text.y=element_text(size=6.5,face="bold"),plot.margin = unit(c(0.1,0.1,0.1,0),"cm"))
 
 	plot.list <- lapply(variables, function(x){
-		subData <- na.omit(totalData[,c("cluster",x)]);qplot(x = subData$cluster, y=subData[, x])+ylab(config$varUnit[x])+geom_boxplot(outlier.size=0.5,na.rm=TRUE)+plot_theme
+		subData <- na.omit(totalData[,c("cluster",x)]);
+		# trans=ggplot(aes(as.factor(cluster),transmission),data=dataSet[dataSet$transmission>0,])+geom_boxplot(outlier.size=0.5)+xlab("Cluster")+ylab("Transmission")+plot_theme
+		ggplot()+geom_boxplot(aes(x = subData$cluster, y=subData[, x]),outlier.size=0.2)+ylab(config$varUnit[x])+plot_theme
 	})
 
 	args.list <- c(plot.list,list(nrow=2,ncol=length(plot.list)/2))

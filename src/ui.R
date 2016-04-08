@@ -122,15 +122,21 @@ shinyUI(
 						)
 					),
 					tabPanel("Clustering", 
-						selectizeInput("varForClustering", label=h5("Selected variable for clustering"), choices=NULL, selected = NULL, multiple = TRUE, options = NULL),
+						column(6,	
+							selectizeInput("varForClustering", label=h5("Selected variable for clustering"), choices=NULL, selected = NULL, multiple = TRUE, options = NULL)
+						),
 						# sliderInput("clusteringNum", "clusteringNum", min = 2, max = 5, value = 3, step= 1),
-
-						selectInput("clusteringNum", label = h5("Cluster Num"), choices = list("2"=2,"3"=3,"4"=4,"5"=5,"6"=6), selected = 2),
+						column(6,
+							selectInput("clusteringNum", label = h5("Cluster Num"), choices = list("2"=2,"3"=3,"4"=4,"5"=5,"6"=6), selected = 2)
+						),
 						actionButton("startClustering", "Start Clustering"),
-						
-						# column(6,
-							rglwidgetOutput("clustering"),
-						# ),
+
+						column(10,
+							rglwidgetOutput("clustering")
+						),
+						column(2,
+							plotOutput("colorBarCluster")
+						),
 						# column(6,
 							plotOutput("boxplot")
 						# )

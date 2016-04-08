@@ -104,9 +104,33 @@ shinyServer(function(input,output,session)
 
 			colorBarValue <- seq(floor(varRange[1]),ceiling(varRange[2]),length.out=100)
 			colorBarColor <- coloPal(colorBarValue)
-			colorBarPlot(colorBarValue,colorBarColor)
+			colorBarPlot(colorBarValue,colorBarColor,title=config$varUnit[input$varToVis])
 		}
 	})
+
+	output$colorBarCluster <- renderPlot({
+		allTriaxus <- clusteredTriaxus()
+		if(is.null(allTriaxus)){
+			return(NULL)
+		}
+		K <- isolate(input$clusteringNum)
+
+		clusterName <- paste("cluster_",K,sep="")
+		v <- c()
+
+		for(myTriaxus in allTriaxus){
+			v <- c(v,myTriaxus@clusteringResults$clusteringIndex[[clusterName]])
+		}
+		varRange <- range(v,na.rm=TRUE)
+		coloPal <- config$factorColor
+
+		colorBarValue <- 1:K
+		colorBarColor <- coloPal(colorBarValue)
+		print(colorBarValue)
+		print(colorBarColor)
+		colorBarPlot_cluster(colorBarValue,colorBarColor,title="cluster")
+	})
+
 
 	output$dygraph <- renderDygraph({
 		myTriaxus <- isolate(readTriaxus())
@@ -158,68 +182,10 @@ shinyServer(function(input,output,session)
 		}
 		K <- isolate(as.integer(input$clusteringNum))
 		print(K)
-		plot_boxplot(allTriaxus,isolate(input$varForClustering),K)
+		plot_boxplot(allTriaxus,isolate(config$interestVar),K)
 	})
 
 
-	# output$clustering <- renderRglwidget({
-	# 	clusterButton()
-	# 	allTriaxus <- isolate(visResultData())
-
-	# 	if(is.null(allTriaxus)){
-	# 		return()
-	# 	}
-		
-	# 	clusterName <- paste("cluster_",isolate(input$clusteringNum),sep="")
-
-	# 	if(is.null(allTriaxus[[1]]@clusteringResults$silhouetteList[[clusterName]])){
-	# 		progress <- shiny::Progress$new()
-	#     	# Make sure it closes when we exit this reactive, even if there's an error
-	#     	on.exit(progress$close())
-	#     	progress$set(message = "Start Clustering", value = 0)
-			
-	# 		variableForClustering <- isolate(input$varForClustering)
-	# 		K <- isolate(as.integer(input$clusteringNum))
-	# 		allTriaxus <- clustering_main(allTriaxus,variableForClustering,Ks=c(K))
-	# 	}
-
-	# 	plot_3d_clustering(allTriaxus,isolate(input$clusteringNum))
-	# 	rglwidget()
-	# })
-
-	# observe({
-	# 	clusterButton()
-	# 	allTriaxus <- isolate(visResultData())
-
-	# 	if(is.null(allTriaxus)){
-	# 		return()
-	# 	}
-		
-	# 	clusterName <- paste("cluster_",isolate(input$clusteringNum),sep="")
-
-	# 	if(is.null(allTriaxus[[1]]@clusteringResults$silhouetteList[[clusterName]])){
-	# 		progress <- shiny::Progress$new()
-	#     	# Make sure it closes when we exit this reactive, even if there's an error
-	#     	on.exit(progress$close())
-	#     	progress$set(message = "Start Clustering", value = 0)
-			
-	# 		variableForClustering <- isolate(input$varForClustering)
-	# 		K <- isolate(as.integer(input$clusteringNum))
-	# 		allTriaxus <- clustering_main(allTriaxus,variableForClustering,Ks=c(K))
-	# 	}
-
-	# 	output$clustering <- renderRglwidget({
-	# 		plot_3d_clustering(allTriaxus,isolate(input$clusteringNum))
-	# 	})
-	# 	output$boxplot <- renderPlot({
-	# 		plot_boxplot(allTriaxus,input$variableForClustering,K)
-	# 	})
-	# })
-	# geoData <<-NULL
-	# latRange<<-NULL
-	# longRange<<-NULL
-	# rawData<<-NULL
-	# allTriaxus <<-
 	gobutton <- eventReactive(input$goButton, {})
 	readButton <- eventReactive(input$readButton, {})
 	clusterButton <- eventReactive(input$startClustering, {})
@@ -313,7 +279,7 @@ shinyServer(function(input,output,session)
 		readButton()
 		myTriaxus <- isolate(readTriaxus())
 		oldTriaxus <- isolate(readPreviousTriaxus())
-
+		updateTabsetPanel(session, "mapFilePage", selected = "Map")
 		geoData <- myTriaxus@cleanData[,c("latitude","longitude","distance","UTC")]
 		latRange <- range(geoData$latitude)
 		longRange <- range(geoData$longitude)
@@ -326,7 +292,6 @@ shinyServer(function(input,output,session)
 				leafletProxy("calMap", data =previousGeoData) %>% addPolylines(lng=~longitude,lat=~latitude,color="yellow")
 			}
 		}
-		updateTabsetPanel(session, "mapFilePage", selected = "Map")
 	})
 
 
@@ -387,6 +352,7 @@ shinyServer(function(input,output,session)
 		# else{
 		# 	allTriaxus <- readRDS(isolate(input$PreviousFile$datapath[1]))
 		# }
+
 		allTriaxus <- isolate(readPreviousTriaxus())
 
 		if(is.null(allTriaxus)){
@@ -395,15 +361,10 @@ shinyServer(function(input,output,session)
 
 		allTriaxus[[myTriaxus@pathName]] <- myTriaxus
 		newTriaxusFileName <- paste("allTriaxus_upto_",myTriaxus@pathName,sep="")
-		saveRDS(allTriaxus,paste("./testFile/",newTriaxusFileName,".rds",sep=""))
-		on.exit(progress$close())
-
-		
+		saveRDS(allTriaxus,paste("~/Developer/Triaxus/output/",newTriaxusFileName,".rds",sep=""))
+		on.exit(progress$close())		
 	})
 	
-	
-
-
 	output$calRaw <- renderPlot({
 		if(!is.null(rawData)){
 			visData <- rawData[,c("Seabird_depth",input$calRawVar)]

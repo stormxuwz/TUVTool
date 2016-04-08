@@ -220,20 +220,19 @@ variogram_fitting <- function(g,plotid){
 	v_model <- v_model_gau
 	bestModel <- "Gau"
 
-	# pdf(file=paste("~/Developer/Project_IO/Triaxus_Analysis/variogram_new/",plotid,"_krig_meta.pdf",sep=""))
-    # par(mfrow=c(2,2))
-    # print(plot(v_ini[v_ini$np>10,],main=paste("Original Variogram",var_name,locationName,sep="-"),pl=T))
-    # print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
-    # print(plot(v_2direction,v_model_gau,main=paste("2 Direction Variogram in Kriging Range gau"),pl=T))
+	pdf(file=paste("~/Developer/Triaxus/output/variogram/",plotid,"_krig_meta.pdf",sep=""))
+    par(mfrow=c(2,2))
+    print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
+    print(plot(v_2direction,v_model_gau,main=paste("2 Direction Variogram in Kriging Range gau"),pl=T))
     # print(plot(v_2direction,v_model_gau2,main=paste("2 Direction Variogram in Kriging Range gau2"),pl=T))
 
-    # print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel),pl=T))
+    print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel),pl=T))
 
     # print(plot(v_0,v_0_model_sph,main=paste("horizon fit individually"),pl=T))
     # print(plot(v_90,v_90_model_sph,main=paste("vertical fit individually"),pl=T))
 
-    # print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
-  	# dev.off()
+    print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
+  	dev.off()
   # print(optimK)
 	return(list(v_model,optimK))
 }
@@ -252,7 +251,7 @@ detrending <- function(dataSet,grid,method){
 
   if(method=="tps"){
       index=seq(from = 1, to = nrow(dataSet), by = 2)
-      trend_model=Tps(dataSet[index,c("distance","depth")],dataSet[index,1],df=20)
+      trend_model=Tps(dataSet[index,c("distance","depth")],dataSet[index,1],df=10)
       pred_orig=predict(trend_model,dataSet[,c("distance","depth")])
   }
   else if(method=="linear"){

@@ -1,3 +1,4 @@
+require("leaflet")
 config <- list()
 
 config$depth_distance_ratio <- 1
@@ -18,3 +19,5 @@ config$varUnit <- c(
 	Zug = "Zooplankton Biomass (ug/m^3)",
 	BAT = "Beam Attenuation Coeff (1/m)"
 )
+
+config$factorColor <- colorFactor(c("blue4","white","red","blue","yellow","green","aquamarine","darkorange3","darkorchid4","lightpink1"),c(-1:8))

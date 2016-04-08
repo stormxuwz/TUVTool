@@ -7,7 +7,6 @@ clustering <- function(allTriaxus,variableForClustering,Ks){
 
     for(Triaxus in allTriaxus){
       # available <- Triaxus@grid$available
-      
       available <- !as.logical(apply(is.na(Triaxus@resultData[,variableForClustering]),1,sum))
 
       totalAvail <- c(totalAvail,available)
@@ -35,6 +34,8 @@ clustering <- function(allTriaxus,variableForClustering,Ks){
 clustering_sub <- function(dataSet,K){
   # dataSet is the data frame with clustering variables as columns
   print(K)
+  dataSet <- scale(dataSet)
+  dataSet <- round(dataSet,2)
   kmcluster=kmeans(dataSet,centers=K,nstart = 30,iter.max=40)
   dissE <- daisy(dataSet)
   sk <- silhouette(kmcluster$cluster, dissE^2)
