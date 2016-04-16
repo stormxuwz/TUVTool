@@ -37,31 +37,31 @@ main<- function(newfile,oldResult,seabirdIndex,bbeIndex,seabird_cutoff,newResult
 
 calculate <- function(){
 	oldResult <- "../output/Manitowoc.rds"
-	main("../input/Manitowoc_01.csv",oldResult,409,371,c(850,-1),TRUE)
-	main("../input/Manitowoc_02.csv",oldResult,3106,3067,c(3120,9352))
-	main("../input/Manitowoc_03.csv",oldResult,6409,6370,c(3120,6360))
-	main("../input/Manitowoc_04.csv",oldResult,244,207,c(1,3311))
-	main("../input/Manitowoc_05.csv",oldResult,0,0,c(1930,8630))
+	system.time(main("../input/Manitowoc_01.csv",oldResult,409,371,c(850,-1),TRUE))
+	system.time(main("../input/Manitowoc_02.csv",oldResult,3106,3067,c(3140,9352)))
+	system.time(main("../input/Manitowoc_03.csv",oldResult,6409,6370,c(3120,6360)))
+	system.time(main("../input/Manitowoc_04.csv",oldResult,244,207,c(1,3311)))
+	system.time(main("../input/Manitowoc_05.csv",oldResult,0,0,c(1930,8630)))
 	allTriaxus <- clustering_main(readRDS(oldResult),c("Seabird_temperature","Spec.Cond"),Ks=c(2,3,4,5,6))
 	saveRDS(allTriaxus,"../output/Manitowoc_Results.rds")
 	rm(allTriaxus)
 
 	oldResult <- "../output/Muskegon.rds"
-	main("../input/Muskegon River_01.csv",oldResult,7267,7228,c(1930,7200),TRUE)
-	main("../input/Muskegon River_02.csv",oldResult,2017,1980,c(1880,-1))
-	main("../input/Muskegon River_03a.csv",oldResult,120,81,c(150,6745))
-	main("../input/Muskegon River_04a.csv",oldResult,377,338,c(1400,6614))
+	system.time(main("../input/Muskegon River_01.csv",oldResult,7267,7228,c(1930,7200),TRUE))
+	system.time(main("../input/Muskegon River_02.csv",oldResult,2017,1980,c(1880,-1)))
+	system.time(main("../input/Muskegon River_03a.csv",oldResult,120,81,c(150,6745)))
+	system.time(main("../input/Muskegon River_04a.csv",oldResult,377,338,c(1400,6614)))
 	allTriaxus <- clustering_main(readRDS(oldResult),c("Seabird_temperature","Spec.Cond"),Ks=c(2,3,4,5,6))
 	saveRDS(allTriaxus,"../output/Muskegon_Results.rds")
 	rm(allTriaxus)
 
 	oldResult <- "../output/Pere.rds"
-	main("../input/Pere Marquette River_01.csv",oldResult,5828,5789,c(200,3260,3780,7450),TRUE)
-	main("../input/Pere Marquette River_02.csv",oldResult,513,473,c(350,4705))
-	main("../input/Pere Marquette River_03.csv",oldResult,2138,2100,c(2200,8637))
-	main("../input/Pere Marquette River_04.csv",oldResult,833,794,c(2000,8299))
-	main("../input/Pere Marquette River_05.csv",oldResult,6806,6769,c(3030,7999))
-	main("../input/Pere Marquette River_06.csv",oldResult,3654,3615,c(360,5100))
+	system.time(main("../input/Pere Marquette River_01.csv",oldResult,5828,5789,c(200,3260,3780,7450),TRUE))
+	system.time(main("../input/Pere Marquette River_02.csv",oldResult,513,473,c(350,4705)))
+	system.time(main("../input/Pere Marquette River_03.csv",oldResult,2138,2100,c(2200,8637)))
+	system.time(main("../input/Pere Marquette River_04.csv",oldResult,833,794,c(2000,8299)))
+	system.time(main("../input/Pere Marquette River_05.csv",oldResult,6806,6769,c(3030,7999)))
+	system.time(main("../input/Pere Marquette River_06.csv",oldResult,3654,3615,c(360,5100)))
 	allTriaxus <- clustering_main(readRDS(oldResult),c("Seabird_temperature","Spec.Cond"),Ks=c(2,3,4,5,6))
 	saveRDS(allTriaxus,"../output/Pere_Results.rds")
 	rm(allTriaxus)
@@ -75,6 +75,7 @@ paper_plot <- function(){
 	paperPlotSub("../output/Manitowoc_Results.rds",transmatrix,riverMouth,3)
 
 
+	
 	transmatrix=matrix(c(0.0670390948653221 , -0.821753919124603 , -0.565885365009308 , 0 , -0.435517132282257 , 0.486176699399948 , -0.757599711418152 , 0 , 0.897680580615997 , 0.297241151332855 , -0.325294703245163 , 0 , 0 , 0 , 0 , 1),nrow=4,ncol=4)
 	riverMouth <- list(c(-86.33,43.22))
 	#plot_3d_clustering(readRDS("../output/Muskegon_Results.rds"),3,transmatrix=transmatrix,riverMouth=riverMouth)
@@ -114,9 +115,9 @@ paperPlotSub <- function(triaxusFile,transmatrix,riverMouth,K){
 	
 	# print boxplot
 	pdf(paste(outputFolder,locationName,K,"boxplot.pdf",sep="_"),height=2.75,width=3.25)
-	plot_boxplot(allTriaxus,config$interestVar,K)
+	plot_boxplot(allTriaxus,config$interestVar[1:8],K)
 	dev.off()
 }
 
-# calculate()
+#calculate()
 paper_plot()

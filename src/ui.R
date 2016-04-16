@@ -113,11 +113,11 @@ shinyUI(
 						checkboxInput("hotspot2d","hotspot")),
 
 					tabPanel("3D Visualize",
-						column(10,
+						column(8,
    							rglwidgetOutput("threeDMap"),
 							checkboxInput("hotspot3d","hotspot")
   						),
-						column(2,
+						column(4,
 							plotOutput("colorBar")
 						)
 					),
@@ -131,10 +131,10 @@ shinyUI(
 						),
 						actionButton("startClustering", "Start Clustering"),
 
-						column(10,
+						column(9,
 							rglwidgetOutput("clustering")
 						),
-						column(2,
+						column(3,
 							plotOutput("colorBarCluster")
 						),
 						# column(6,

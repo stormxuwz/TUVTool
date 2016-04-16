@@ -15,7 +15,8 @@ setClass(
 		clusteringResults = "list",
 		SeabirdAnchorIndex="numeric",
 		BBEAnchorIndex="numeric",
-		seperate = "logical"
+		seperate = "logical",
+		separationNode = "numeric"
 	)
 )
 

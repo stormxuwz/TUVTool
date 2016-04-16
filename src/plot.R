@@ -33,7 +33,7 @@ plot_raw <- function(Triaxus,var){
 	colorRange <- range(c(range(Triaxus@cleanData[,var],na.rm = TRUE),range(Triaxus@resultData[,var],na.rm = TRUE)))
 
 	names(visdata)[1] <- "value"
-	p <- ggplot(visdata)+geom_point(aes(distance,-depth,color=value))+scale_color_gradientn(colours = topo.colors(10),name=var,limits=colorRange)
+	p <- ggplot(visdata)+geom_point(aes(distance,-depth,color=value))+scale_color_gradientn(colours = topo.colors(10),name=config$varUnit[var],limits=colorRange)
 	p <- p+xlab("Distance (km)")+ylab("Depth (m)")
 	return(p)
 }
@@ -43,7 +43,7 @@ plot_2d <- function(Triaxus,var){
 	colorRange <- range(c(range(Triaxus@cleanData[,var],na.rm = TRUE),range(Triaxus@resultData[,var],na.rm = TRUE)))
 	print(colorRange)
 	names(visdata)[1] <- "value"
-	p <- ggplot(visdata)+geom_tile(aes(distance,-depth,fill=value))+scale_fill_gradientn(colours = topo.colors(10),name=var,limits=colorRange)
+	p <- ggplot(visdata)+geom_tile(aes(distance,-depth,fill=value))+scale_fill_gradientn(colours = topo.colors(10),name=config$varUnit[var],limits=colorRange)
 	p <- p+geom_point(aes(distance,-depth),data=Triaxus@cleanData,alpha=0.5)
 	p <- p+xlab("Distance (km)")+ylab("Depth (m)")
 	return(p)
@@ -160,14 +160,14 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 		# print(summary(varVal))
 		# print(varVal)
 		valColor <- coloPal(varVal)
-		#z[naIndex] <- NA
+		# z[naIndex] <- NA
 		z_tmp <- t(matrix(z,length(y_tmp),length(x_tmp)))
 		col_tmp <- t(matrix(valColor,length(y_tmp),length(x_tmp)))
 		surface3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
 		# persp3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
 	}
 	rgl.viewpoint(zoom = .8)
-	par3d(userMatrix=transmatrix,windowRect=c(720,0,1920,1200),cex=1)
+	par3d(userMatrix=transmatrix,windowRect=c(720,0,1920,1200),cex=0.00001)
 	aspect3d(c(0.65,1,1))	
 	
 }

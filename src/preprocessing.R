@@ -50,20 +50,25 @@ preprocessing <- function(Triaxus){
 	Triaxus@cleanData$depth <- Triaxus@cleanData$Seabird_depth
 	
 	Triaxus@cleanData <- Triaxus@cleanData[finalStartNodes:finalEndNodes,]
+
+	# Adding salinity and density estimation.
+	tmpData <- Triaxus@cleanData[,c("latitude","longitude","pressure","conductivity")]
+	tmpData$temperature <- Triaxus@cleanData$Seabird_temperature
+	densityData <- cal_density(tmpData)
+	Triaxus@cleanData <- cbind(Triaxus@cleanData,densityData)
+
+	
 	Triaxus@numCycle <- (length(Seabird_separation[[2]])-1)/2-1
 	return(Triaxus)
 }
 
 
 
-
-
-
 initProcess <- function(dataSet){
 	# dataSet <- na.omit(dataSet)
-	dataSet <- dplyr::select(dataSet,-c(latitude,longitude,ShpSpd_Cmputd,scan.count,pressure,DO.optode,optode.T))
+	dataSet <- dplyr::select(dataSet,-c(latitude,longitude,ShpSpd_Cmputd,scan.count,DO.optode,optode.T))
 	dataSet <- dplyr::rename(dataSet,BBE_depth=depth.1,Seabird_depth=depth,Seabird_temperature=temp,
-		BBE_temperature=temp.1,distance=Distance,DO=DO.43.mg.L,DOsat=DO43...sat,latitude=DDLat,longitude=DDLong)
+		BBE_temperature=temp.1,distance=Distance,DO=DO.43.mg.L,DOsat=DO43...sat,latitude=DDLat,longitude=DDLong,conductivity = cond)
 	
 	if("Zdens" %in% names(dataSet)){
 		dataSet$Zdens <- as.numeric(as.character(dataSet$Zdens))
@@ -163,6 +168,14 @@ spatialOutlier <- function(spData,x_y_ratio,nbRange,threshold){
 	return(outlier)
 }
 
+
+cal_density <- function(data){
+	# data is a data frame that contains latitude,longitude, temperature, conductivity and pressure
+	require(oce)
+	salinity <- swSCTp(conductivity=data$conductivity/1000,temperature=data$temperature,pressure=data$pressure,"mS/cm")
+	density <- swRho(salinity,data$temperature,data$pressure,longitude = data$longitude,latitude = data$latitude)
+	return(data.frame(salinity = salinity, density = density))
+}
 
 
 # preprocessing_old <- function(Triaxus){
