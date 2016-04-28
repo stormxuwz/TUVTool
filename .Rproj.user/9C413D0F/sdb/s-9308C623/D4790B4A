@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "require(\"leaflet\")\nconfig <- list()\n\nconfig$depth_distance_ratio <- 1\nconfig$nbrange <- 0.75\nconfig$BBE_name <- c(\"total\",\"green\",\"bluegreen\",\"diatom\")\nconfig$Seabird_name <- c(\"Seabird_temperature\",\"DO\",\"DOsat\",\"conductivity\",\"BAT\",\"Spec.Cond\",\"pressure\")\nconfig$gridSize=c(dx=0.2,dy=0.25)\nconfig$interestVar <- c(\"Seabird_temperature\",\"Spec.Cond\",\"DO\",\"DOsat\",\"total\",\"BAT\",\"Zdens\",\"Zug\")\n# config$interestVar <- c(\"Zdens\")\nconfig$LOPC_name <- c(\"Zdens\",\"Zug\")\nconfig$varUnit <- c(\n\tSeabird_temperature=\"Temperature (C)\",\n\tDO = \"DO (mg/L)\",\n\tSpec.Cond = \"Spec Cond (uS/cm)\",\n\tDOsat = \"DO Sat (%)\",\n\ttotal = \"Chl (ug/L)\",\n\tZdens = \"Zooplankton Density (1/m^3)\",\n\tZug = \"Zooplankton Biomass (ug/m^3)\",\n\tBAT = \"Beam Attenuation Coeff (1/m)\",\n\tdensity = \"Density (kg/m^3)\"\n)\n\nconfig$factorColor <- colorFactor(c(\"blue4\",\"white\",\"red\",\"blue\",\"yellow\",\"green\",\"aquamarine\",\"darkorange3\",\"darkorchid4\",\"lightpink1\"),c(-1:8))\nconfig$tpsDf <- 10\nconfig$K <- c(1,5)\n# config$krigingRange <- 4",
+    "created" : 1461074955737.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1024108328",
+    "id" : "D4790B4A",
+    "lastKnownWriteTime" : 1461074965,
+    "last_content_update" : 1461074965444,
+    "path" : "~/Developer/Triaxus/TriaxusCode/src/config.R",
+    "project_path" : "src/config.R",
+    "properties" : {
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

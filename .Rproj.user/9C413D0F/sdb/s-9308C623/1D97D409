@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "library(zoo)\nlibrary(dygraphs)\n\npere_wind <- read.table(\"/Users/WenzhaoXu/Developer/Triaxus/input/ldtm4h2011.txt\",skip=2,sep=\"\")\nmuskegon_wind <- read.table(\"/Users/WenzhaoXu/Developer/Triaxus/input/mkgm4h2011.txt\",skip=2,sep=\"\")\n\n\ntransData <- function(dataSet){\n\tdataSet$time <- strptime(sprintf(\"%d-%d-%d %d:%d\",dataSet$V1,dataSet$V2,dataSet$V3,dataSet$V4,dataSet$V5),format = \"%Y-%m-%d %H:%M\",tz=\"UTC\")\n\tnames(dataSet)[6:8] <- c(\"WDIR\",\"WSPD\",\"GST\")\n\treturn(zoo(dataSet[,c(\"WDIR\",\"WSPD\",\"GST\")],order.by = dataSet$time))\n}\n\npere_wind <- transData(pere_wind)\nmuskegon_wind <- transData(muskegon_wind)\n\ndygraph(window(pere_wind,start = as.POSIXct(\"2011-06-28 11:00:00\",tz=\"UTC\"),end = as.POSIXct(\"2011-06-28 23:59:00\",tz=\"UTC\")))\ndygraph(window(muskegon_wind,start = as.POSIXct(\"2011-06-27 18:00:00\",tz=\"UTC\"),end = as.POSIXct(\"2011-06-28 02:00:00\",tz=\"UTC\")))\n",
+    "created" : 1460697979709.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1140585367",
+    "id" : "1D97D409",
+    "lastKnownWriteTime" : 1460698380,
+    "last_content_update" : 1460698380217,
+    "path" : "~/Developer/Triaxus/TriaxusCode/plotWind.R",
+    "project_path" : "plotWind.R",
+    "properties" : {
+        "docOutlineVisible" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
