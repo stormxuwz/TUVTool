@@ -361,7 +361,7 @@ shinyServer(function(input,output,session)
 
 		allTriaxus[[myTriaxus@pathName]] <- myTriaxus
 		newTriaxusFileName <- paste("allTriaxus_upto_",myTriaxus@pathName,sep="")
-		saveRDS(allTriaxus,paste("~/Developer/Triaxus/output/",newTriaxusFileName,".rds",sep=""))
+		saveRDS(allTriaxus,paste(config$outputFolder,newTriaxusFileName,".rds",sep=""))
 		on.exit(progress$close())		
 	})
 	
