@@ -327,7 +327,7 @@ shinyServer(function(input,output,session)
 			points(-subData$depth_1[BBE_maxDepth_index]~BBEIndex,col="red")
 			
 			# print(seabirdIndex)
-			suggestion <- paste("Seabird Index:",seabirdIndex,"/FlorProb Index:",BBEIndex)
+			suggestion <- paste("Seabird Index:",seabirdIndex,",FluoroProbe Index:",BBEIndex)
 			updateTextInput(session,"suggestedAnchorIndex",value = suggestion)
 		}
 	})

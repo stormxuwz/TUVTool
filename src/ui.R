@@ -35,7 +35,7 @@ shinyUI(
 
 					column(6,
 						numericInput("BBE_anchor_index", 
-  						label = h6("Fluoprob"), 
+  						label = h6("FluoroProbe"), 
   						value = 0)
 					),
 
