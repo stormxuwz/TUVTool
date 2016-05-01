@@ -1,11 +1,18 @@
 library(dplyr)
+library(lubridate)
 
 
 
 alignment <- function(timePassSecond,BBE_time,seabirdIndex,bbeIndex){
-	newSeabirdTime <- BBE_time[bbeIndex]
-	timeAdjust <- (seq(1:length(BBE_time))-seabirdIndex)*0.5
-	newSeabirdTime <- newSeabirdTime+timeAdjust
+	anchorBBETime <- BBE_time[bbeIndex]
+	anchorSeabirdTime <- timePassSecond[seabirdIndex]
+
+	newSeabirdTimeDiff <- timePassSecond-anchorSeabirdTime
+	newSeabirdTime <- anchorBBETime+newSeabirdTimeDiff
+	# newSeabirdTime <- BBE_time[bbeIndex]
+
+	# timeAdjust <- (seq(1:length(BBE_time))-seabirdIndex)*0.5
+	# newSeabirdTime <- newSeabirdTime+timeAdjust
 	return(newSeabirdTime)
 }
 
@@ -18,6 +25,7 @@ preprocessing <- function(Triaxus){
 	BBE_name <- Triaxus@config$BBE_name
 	Seabird_name <- Triaxus@config$Seabird_name
 
+	# print(summary(Triaxus@rawData))
 	geoData <- Triaxus@rawData[,c("latitude","longitude","distance","UTC")]
 	Seabird_data <- Triaxus@rawData[,c(Seabird_name,"Seabird_depth")]
 	LOPC_data <- Triaxus@rawData[,Triaxus@config$LOPC_name]
@@ -66,7 +74,8 @@ preprocessing <- function(Triaxus){
 
 initProcess <- function(dataSet){
 	# dataSet <- na.omit(dataSet)
-	dataSet <- dplyr::select(dataSet,-c(latitude,longitude,ShpSpd_Cmputd,scan.count,DO.optode,optode.T))
+	print(summary(dataSet))
+	dataSet <- dplyr::select(dataSet,-c(latitude,longitude,DO.optode,optode.T))
 	dataSet <- dplyr::rename(dataSet,BBE_depth=depth.1,Seabird_depth=depth,Seabird_temperature=temp,
 		BBE_temperature=temp.1,distance=Distance,DO=DO.43.mg.L,DOsat=DO43...sat,latitude=DDLat,longitude=DDLong,conductivity = cond)
 	

@@ -12,6 +12,7 @@ library(ggplot2)
 source("plot.R")
 library(plotly)
 library(dplyr)
+
 source("config.R")
 source("Triaxus_class.R")
 source("preprocessing.R")
@@ -19,7 +20,7 @@ source("interpolation.R")
 source("hotspot.R")
 source("clustering.R")
 source("misc.R")
-
+source("rawFileParser.R")
 
 # color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), title='') {
 # 	scale = (length(lut)-1)/(max-min)
@@ -255,9 +256,10 @@ shinyServer(function(input,output,session)
 
 	readTriaxus <- reactive({
 		realName <- input$newFile$name[1]
+		rawData <- readRawFile()
 		progress <- Progress$new()
 		myTriaxus <- new("Base_Triaxus",config,input$newFile$datapath[1],input$Seabird_anchor_index,
-			input$BBE_anchor_index,c(input$startIndex,input$endIndex),realName)
+			input$BBE_anchor_index,c(input$startIndex,input$endIndex),realName=realName,separate=config$separate)
 		progress$set(message = "Preprocessing", value = 0)
 		myTriaxus <- preprocessing(myTriaxus)
 		on.exit(progress$close())
@@ -296,14 +298,30 @@ shinyServer(function(input,output,session)
 
 
 	readRawFile <- reactive({
-		if(is.null(input$newFile$datapath[1])){
+		progress <- Progress$new()
+		on.exit(progress$close())
+		fileName <- input$newFile$datapath[1]
+		
+		if(is.null(fileName)){
 			return(NULL)
 		}
-		rawData <- read.csv(input$newFile$datapath[1])
+		
+		FileExtension <- tools::file_ext(input$newFile$name)
+		progress$set(message = "Processing File", value = 0)
+		if(FileExtension=="csv"){
+			rawData <- read.csv(fileName)
+		}else if(FileExtension=="dat"){
+			rawData <- readingRawFile(fileName)
+		}else{
+			return(NULL)
+		}
+		progress$set(message = "Finished", value = 0)
+
+		# rawData <- read.csv(input$newFile$datapath[1])
 		rawData$n <- 1:nrow(rawData)
 		rawData <- rawData[,c("depth","depth.1","n")]
 		names(rawData)[2] <- "depth_1"
-		rawData		
+		na.omit(rawData)
 	})
 
 
@@ -321,7 +339,8 @@ shinyServer(function(input,output,session)
 			seabirdIndex <- subData$n[seabird_maxDepth_index]
 			BBEIndex <- subData$n[BBE_maxDepth_index]
 
-			plot(-depth~n,data=subData,type="l")
+			ymax <- max(subData[,c("depth","depth_1")],na.rm=TRUE)
+			plot(-depth~n,data=subData,type="l",ylim = c(-ymax,0))
 			lines(-depth_1~n,data=subData,col="blue")
 			points(-subData$depth[seabird_maxDepth_index]~seabirdIndex,col="red")
 			points(-subData$depth_1[BBE_maxDepth_index]~BBEIndex,col="red")

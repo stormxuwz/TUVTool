@@ -7,6 +7,7 @@ source("./src/hotspot.R")
 source("./src/clustering.R")
 source("./src/plot.R")
 source("./src/misc.R")
+source("./src/rawFileParser.R")
 library(RColorBrewer)
 library(leaflet)
 library(ggplot2)
@@ -16,8 +17,9 @@ library(rgl)
 outputFolder <- "../output/"
 
 
+
 main<- function(newfile,oldResult,seabirdIndex,bbeIndex,seabird_cutoff,newResult=FALSE){
-	myTriaxus <- new("Base_Triaxus",config,newfile,seabirdIndex,bbeIndex,seabird_cutoff)
+	myTriaxus <- new("Base_Triaxus",config,newfile,seabirdIndex,bbeIndex,seabird_cutoff,separate=config$separate)
 	print(newfile)
 	myTriaxus <- preprocessing(myTriaxus) %>% interpolation_main(int_method="krige",det_method="tps") %>% hotspot_main() 
   	
@@ -32,7 +34,8 @@ main<- function(newfile,oldResult,seabirdIndex,bbeIndex,seabird_cutoff,newResult
 		allTriaxus[[myTriaxus@pathName]] <- myTriaxus
 		saveRDS(allTriaxus,oldResult)
 	}
-	# 
+
+	return(myTriaxus) 
 }
 
 calculate <- function(){
@@ -120,4 +123,11 @@ paperPlotSub <- function(triaxusFile,transmatrix,riverMouth,K){
 }
 
 #calculate()
-paper_plot()
+# paper_plot()
+
+# main<- function(newfile,oldResult,seabirdIndex,bbeIndex,seabird_cutoff,newResult=FALSE){
+# newFile <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/transect_5_night_1.dat"
+newFile <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/NS_2013_HU3_HU4_1.dat"
+
+# tmp <- main(newFile,"test.rds",1298,1257,c(500,3000),newResult = TRUE)
+tmp <- main(newFile,"test.rds",4283,4245,c(300,8000),newResult = TRUE)

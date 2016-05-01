@@ -14,12 +14,15 @@ interpolation_main <- function(Triaxus,int_method,det_method=NULL){
 	Triaxus@resultData <- Triaxus@grid
 
 	# maxdist <- ifelse(config$krigingRange/Triaxus@numCycle>0.15,config$krigingRange/Triaxus@numCycle,0.15)
-	maxdist <- 0.33
+	# maxdist <- 0.33
+	# maxdist <- config$maxdist
 	# maxdist <- NULL
+	maxdist <- min(max(config$maxdist,3/Triaxus@numCycle),1)
 
-	if(Triaxus@seperate == FALSE){
-		print("no seperating")
+	if(Triaxus@separate == FALSE){
+		print("no separating")
 		for(var in Triaxus@config$interestVar){
+			print(var)
 			plotid <- paste(Triaxus@pathName,var,sep="_")
 			outlierIndex <- init_filter(Triaxus@cleanData[,var],var)
 			pred <- interpolation_sub(Triaxus@cleanData[outlierIndex<1,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_whole",sep=""),maxdist = maxdist)
@@ -129,6 +132,7 @@ interpolation_tps<-function(spData,grid,...){
 interpolation_krig <- function(spData,grid,idw,...){
 	require(gstat)
  	var_name <- names(spData)[1]
+ 	# print(spData$distance)
  	print(range(spData$distance))
 
  	scaleSetting <- scaleFactor(spData$distance,spData$depth)
@@ -144,17 +148,19 @@ interpolation_krig <- function(spData,grid,idw,...){
     # coordinates(grid)=~scaled_x+scaled_y
  	
  	spData=remove.duplicates(spData,zero=0.005,remove.second=TRUE) 	# remove too near points
+ 	# spData=remove.duplicates(spData,zero=0.01,remove.second=TRUE) 	# remove too near points
+ 	
  	var_formu=as.formula(paste("res","~1"))
  	# print(list(...)$maxdist)
  	if(idw==TRUE){
  	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
  	}else{
- 	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100, nmin = 20)
+ 	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist)
 
 		vgmFitting=variogram_fitting(model_gstat,list(...)$plotid)
 		model_gstat$data[[1]]$data@coords[,2] <- model_gstat$data[[1]]$data@coords[,2]*vgmFitting[[2]]
 		grid$scaled_y <- grid$scaled_y*vgmFitting[[2]]
-		model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]])
+		model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]], nmax = 100 ,nmin = 50)
 	}
  	 coordinates(grid)=~scaled_x+scaled_y
  	 # print(grid)
@@ -281,19 +287,23 @@ variogram_fitting <- function(g,plotid){
 	# v_model <- v_model_gau
 	bestModel <- "Gau"
 
-	#pdf(file=paste("~/Developer/Triaxus/output/variogram/",plotid,"_krig_meta.pdf",sep=""))
-  #  par(mfrow=c(2,2))
-  #  print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
-  #  print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range gau"),pl=T))
+	# pdf(file=paste("~/Developer/Triaxus/output/variogram/",plotid,"_krig_meta.pdf",sep=""))
+   # par(mfrow=c(2,2))
+   # print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
+   # print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range gau"),pl=T))
+    # print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel),pl=T))
+       # print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
+  	# dev.off()
+
+  	
     # print(plot(v_2direction,v_model_gau2,main=paste("2 Direction Variogram in Kriging Range gau2"),pl=T))
 
-  #  print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel),pl=T))
+  
 
     # print(plot(v_0,v_0_model_sph,main=paste("horizon fit individually"),pl=T))
     # print(plot(v_90,v_90_model_sph,main=paste("vertical fit individually"),pl=T))
 
-  #  print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
-  #	dev.off()
+
   # print(optimK)
 	return(list(v_model,optimK))
 }
