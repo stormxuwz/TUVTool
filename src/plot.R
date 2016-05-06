@@ -91,8 +91,18 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 			varRange <- range(allVar,na.rm=TRUE)
 			coloPal <- colorNumeric(topo.colors(10), c(floor(varRange[1]),ceiling(varRange[2])))
 	}
+	print(range(geoLocation$latitude))
+	long_bbox <- geoLocation$longitude
+	lat_bbox <- geoLocation$latitude
+	if((diff(range(geoLocation$latitude)))<0.01){
+		lat_bbox <- c(lat_bbox,min(lat_bbox)-0.02,max(lat_bbox)+0.02)
+	}
 
-	bbox <- ggmap::make_bbox(geoLocation$longitude,geoLocation$latitude,f=0.2)
+	if((diff(range(geoLocation$longitude)))<0.01){
+		lat_bbox <- c(long_bbox,min(long_bbox)-0.02,max(long_bbox)+0.02)
+	}
+
+	bbox <- ggmap::make_bbox(long_bbox,lat_bbox,f=0.2) # previous is 0.2
 	print(bbox)
 	open3d()
 
@@ -120,7 +130,6 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 	geoy=lat
 	geoz=matrix(rep(c(long)),nrow=length(long),ncol=length(lat))
 	geocol=pracma::rot90(cols,k=-1)
-
 	surface3d(geox,geoy,geoz,col=geocol,add=T,lit=F,alpha=0.3)
 
 	# Plot the river mouth

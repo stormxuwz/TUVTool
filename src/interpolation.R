@@ -1,7 +1,7 @@
 #### This is the main part for krig Interpolation, with following functions
 ## 1: kriging Interpolation
 ## 2: GA variogram fit
-require("GA")
+# require("GA")
 interpolation_main <- function(Triaxus,int_method,det_method=NULL){
 	Triaxus@grid <- createGrid(
 		x=Triaxus@cleanData$distance,
@@ -19,34 +19,26 @@ interpolation_main <- function(Triaxus,int_method,det_method=NULL){
 	# maxdist <- NULL
 	maxdist <- min(max(config$maxdist,3/Triaxus@numCycle),1)
 
-	if(Triaxus@separate == FALSE){
-		print("no separating")
-		for(var in Triaxus@config$interestVar){
-			print(var)
+	
+	for(var in Triaxus@config$interestVar){
+		print(var)
+		if(Triaxus@separate == FALSE ){
+			# | var == "BAT"
+			print("no separating")
 			plotid <- paste(Triaxus@pathName,var,sep="_")
 			outlierIndex <- init_filter(Triaxus@cleanData[,var],var)
 			pred <- interpolation_sub(Triaxus@cleanData[outlierIndex<1,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_whole",sep=""),maxdist = maxdist)
 			Triaxus@resultData[,var] <- ifelse(pred>0,pred,0)
-		}
-	}else{
-		for(var in Triaxus@config$interestVar){
-			print(var)
+		}else{
 			plotid <- paste(Triaxus@pathName,var,sep="_")
 	  		outlierIndex <- init_filter(Triaxus@cleanData[,var],var)
 	    	pred_down <- interpolation_sub(subset(Triaxus@cleanData[outlierIndex<1,],direction==-1)[,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_down",sep=""),maxdist = maxdist)
 	    	pred_up <- interpolation_sub(subset(Triaxus@cleanData[outlierIndex<1,],direction==1)[,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_up",sep=""),maxdist = maxdist)
-	    	
-	    	# pred <- apply(c(1:length(pred_down)),
-	    	# 	function(x){
-	    	# 		if(is.na(pred_down[i]))
-	    	# 			return(pred_up*2)
-
-	    	# 	)
-
 	    	finalPrediction <- (pred_down+pred_up)/2.0
 	    	Triaxus@resultData[,var] <- ifelse(finalPrediction>0,finalPrediction,0)
-		}
+		}		
 	}
+
 
 	# Triaxus@grid$available <- !as.logical(apply(is.na(Triaxus@resultData[,Triaxus@config$interestVar]),1,sum)) # update
 	return(Triaxus)
@@ -85,6 +77,9 @@ interpolation_sub <- function(dataSet,grid,int_method,det_method,...){
 	}
 
     pred[availableIndex] <- detrending_result$trendSurface+pred_res
+    # print(hist(dataSet$res))
+    # print(summary(dataSet[,1]))
+    # print(summary(pred))
     return(pred)
 }
 
@@ -94,6 +89,7 @@ createGrid <- function(x,y,dx,dy,longitude,latitude){
     require(dismo)
 		xRange <- range(x)
 		yRange <- range(y)
+		# yRange <- quantile(y,c(0.05,0.8))
 		startDepth=yRange[1]-yRange[1]%%dy+dy
 		grid <- expand.grid(distance=seq(from=xRange[1],to=xRange[2],by=dx),
 			depth=seq(from=startDepth,to=yRange[2],by=dy))
@@ -147,7 +143,7 @@ interpolation_krig <- function(spData,grid,idw,...){
     coordinates(spData)=~scaled_distance+scaled_depth
     # coordinates(grid)=~scaled_x+scaled_y
  	
- 	spData=remove.duplicates(spData,zero=0.005,remove.second=TRUE) 	# remove too near points
+ 	spData <- remove.duplicates(spData,zero=0.005,remove.second=TRUE) 	# remove too near points
  	# spData=remove.duplicates(spData,zero=0.01,remove.second=TRUE) 	# remove too near points
  	
  	var_formu=as.formula(paste("res","~1"))
@@ -155,16 +151,23 @@ interpolation_krig <- function(spData,grid,idw,...){
  	if(idw==TRUE){
  	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
  	}else{
- 	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist)
+ 	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
 
 		vgmFitting=variogram_fitting(model_gstat,list(...)$plotid)
+		# print(summary(model_gstat$data[[1]]$data@coords[,2] ))
 		model_gstat$data[[1]]$data@coords[,2] <- model_gstat$data[[1]]$data@coords[,2]*vgmFitting[[2]]
+		model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]])
 		grid$scaled_y <- grid$scaled_y*vgmFitting[[2]]
-		model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]], nmax = 100 ,nmin = 50)
+		
+		# spData <- remove.duplicates(spData,zero=0.11,remove.second=TRUE)  # remove more points to avoid potential cov singularity
+		# model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]], data = spData,nmax = 100 ,nmin = 20)
+		# model_gstat$data[[1]]$data@coords[,2] <- model_gstat$data[[1]]$data@coords[,2]*vgmFitting[[2]]
 	}
  	 coordinates(grid)=~scaled_x+scaled_y
  	 # print(grid)
- 	 pred<-predict(model_gstat,grid,debug.level=-1)	
+ 	 pred<-predict(model_gstat,grid,debug.level=-1)
+ 	 print(summary(spData$res))
+ 	 print(summary(pred[[1]]))
  	 return(pred[[1]])
 }
 
@@ -175,7 +178,8 @@ variogram_fitting <- function(g,plotid){
 	print(paste("localRange:",localRange))
 	g0 <- g
 	Y0=g0$data[[1]]$data@coords[,2];
-	
+	kgmodel <- config$model
+
 	optimFunc <- function(K,g){
 		g$data[[1]]$data@coords[,2] <- Y0*K
 		v <- variogram(g,cressie=T,alpha=c(0,90),cutoff=localRange,width=localRange/15)
@@ -187,11 +191,11 @@ variogram_fitting <- function(g,plotid){
 		if(nrow(v_0)<1 | nrow(v_90)<1)
 			return(Inf)
 		# print(v)
-		# v_0_model <- fit.variogram(v_0,vgm(NA,"Exp",NA,v_0$gamma[1]),fit.method=7)
-		v_0_model <- fit.variogram(v_0,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=7)
+		v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=7)
+		# v_0_model <- fit.variogram(v_0,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=7)
 
-		# v_90_model <- fit.variogram(v_90,vgm(NA,"Exp",NA,v_0$gamma[1]),fit.method=7)
-		v_90_model <- fit.variogram(v_90,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=7)
+		v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=7)
+		# v_90_model <- fit.variogram(v_90,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=7)
 		# if(v_0_model$range[2]<0 | v_90_model$range[2]<0)
 			# return(Inf)
 		# v_model <- fit.variogram(v_90,vgm(NA,"Gau",NA,v$gamma[1]),fit.method=7)
@@ -202,8 +206,8 @@ variogram_fitting <- function(g,plotid){
 			# print(K)
 			# print(v_0)
 			# print(v_90)
-			v_0_model <- fit.variogram(v_0,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=0)
-			v_90_model <- fit.variogram(v_90,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=0)
+			v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=0)
+			v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=0)
 		}
 
 		a <- mean((variogramLine(v_0_model, dist_vector = v_0$dist)$gamma-variogramLine(v_90_model, dist_vector = v_0$dist)$gamma)^2)
@@ -253,8 +257,8 @@ variogram_fitting <- function(g,plotid){
 	g0$data[[1]]$data@coords[,2] <- Y0*optimK
 	
 	v <- variogram(g0,cressie=T,cutoff=localRange,width=localRange/15)
-	# v_model<- fit.variogram(v,vgm(NA,"Exp",NA,v$gamma[1]),fit.method=7)
-	v_model<- fit.variogram(v,vgm(NA,"Gau",NA,v$gamma[1]),fit.method=7)
+	v_model<- fit.variogram(v,vgm(NA,kgmodel,NA,v$gamma[1]),fit.method=7)
+	# v_model<- fit.variogram(v,vgm(NA,"Gau",NA,v$gamma[1]),fit.method=7)
 
 
 	if(v_model$range[2]<0){
@@ -285,15 +289,15 @@ variogram_fitting <- function(g,plotid){
 	# bestModel <- ifelse(v_model_gau_err>v_model_gau_err2,"Exp","Gau")
 
 	# v_model <- v_model_gau
-	bestModel <- "Gau"
+	bestModel <- kgmodel
 
-	# pdf(file=paste("~/Developer/Triaxus/output/variogram/",plotid,"_krig_meta.pdf",sep=""))
-   # par(mfrow=c(2,2))
-   # print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
-   # print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range gau"),pl=T))
-    # print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel),pl=T))
-       # print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
-  	# dev.off()
+	pdf(file=paste("~/Developer/Triaxus/output/variogram/",plotid,"_krig_meta.pdf",sep=""))
+   	par(mfrow=c(2,2))
+   	print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
+   	print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range"),pl=T))
+    print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel,"range = ",localRange),pl=T))
+    print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
+  	dev.off()
 
   	
     # print(plot(v_2direction,v_model_gau2,main=paste("2 Direction Variogram in Kriging Range gau2"),pl=T))
@@ -312,8 +316,8 @@ variogram_fitting <- function(g,plotid){
 detrending <- function(dataSet,grid,method){
   require(fields,,quietly = TRUE)
   # print(head(dataSet))
-  var_name=names(dataSet)[1]
-  num=nrow(grid)
+  var_name <- names(dataSet)[1]
+  num <- nrow(grid)
   # print(paste("Detrending on",var_name," ,using",type))
 
   if(method=="none"){
@@ -325,7 +329,7 @@ detrending <- function(dataSet,grid,method){
       trend_model=Tps(dataSet[index,c("distance","depth")],dataSet[index,1],df=config$tpsDf)
       pred_orig=predict(trend_model,dataSet[,c("distance","depth")])
   }
-  else if(method=="linear"){
+  else if(method=="loess"){
       var_formu=as.formula(paste(var_name,"~distance+depth"))
       trend_model=loess(var_formu,data=dataSet,span=0.25)
       pred_orig=predict(trend_model,dataSet[,2:3])

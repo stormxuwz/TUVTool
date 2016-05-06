@@ -43,10 +43,11 @@ distanceSpeedCalculation <- function(data){
 	distance <- rep(0,nrow(data))
 	speed <- rep(0,nrow(data))
 	locData <- as.matrix(data[,2:3])
-	distance[1:100]=spDistsN1(locData[1:100,],locData[1,],longlat=TRUE) # km
+	distance[1:100] <- spDistsN1(locData[1:100,],locData[1,],longlat=TRUE) # km
 	speed[2:100] <- sapply(2:100,function(i) (distance[i]-distance[1])/(data$timePassSecond[i]-data$timePassSecond[1]))
 		
 	for(i in 101:nrow(data)){
+						# print(i)
             delt_Dis=spDistsN1(matrix(locData[i,],ncol=2),locData[i-99,],longlat=TRUE);
             distance[i]=delt_Dis+distance[i-99];
             speed[i] = (distance[i]-distance[i-99])/(data$timePassSecond[i]-data$timePassSecond[i-99])
@@ -57,7 +58,7 @@ distanceSpeedCalculation <- function(data){
 
 LOPCFeature<-function(data){
   # Calculate the LOPC biomass and biodensity data
-    AveFlowCnt=data$FlowCounts/data$DeltaTime;
+    AveFlowCnt <- data$DeltaTime/data$FlowCounts
   
     data$flowSpeed=ifelse(AveFlowCnt<=13,23.10410966*exp(-(-1.481499106*sqrt(sqrt(AveFlowCnt))+1.566460406*sqrt(AveFlowCnt)+0.196311142*sqrt(AveFlowCnt)^2-0.05*sqrt(AveFlowCnt)^3)),0.198996019*exp(-(-2.603059062*sqrt(sqrt(AveFlowCnt))+0.892897609*sqrt(AveFlowCnt)+0.006191239*sqrt(AveFlowCnt)^2-0.0013*sqrt(AveFlowCnt)^3)));
     numPoints=nrow(data)
@@ -97,7 +98,9 @@ readingRawFile <- function(filename){
 	LOPC_line <- rep(NA,138)
 	i <- 1
 
-	dfNames <- c("UTC","latitude","longitude","scan.count","pressure","depth","temp","cond","DO.43.mg.L","DO43...sat","DO.optode","optode.T","BAT","fpb_year","fpb_month","fpb_day","fpb_hour","fpb_min","fpb_second","depth.1","temp.1","green","bluegreen","diatom","crypto","unused","unused.1","unused.2","YS","total","transmission","pf_date","pf_time","Fo","Fm","blank","Fv","Yield","BIN1","BIN2","BIN3","BIN4","BIN5","BIN6","BIN7","BIN8","BIN9","BIN10","BIN11","BIN12","BIN13","BIN14","BIN15","BIN16","BIN17","BIN18","BIN19","BIN20","BIN21","BIN22","BIN23","BIN24","BIN25","BIN26","BIN27","BIN28","BIN29","BIN30","BIN31","BIN32","BIN33","BIN34","BIN35","BIN36","BIN37","BIN38","BIN39","BIN40","BIN41","BIN42","BIN43","BIN44","BIN45","BIN46","BIN47","BIN48","BIN49","BIN50","BIN51","BIN52","BIN53","BIN54","BIN55","BIN56","BIN57","BIN58","BIN59","BIN60","BIN61","BIN62","BIN63","BIN64","BIN65","BIN66","BIN67","BIN68","BIN69","BIN70","BIN71","BIN72","BIN73","BIN74","BIN75","BIN76","BIN77","BIN78","BIN79","BIN80","BIN81","BIN82","BIN83","BIN84","BIN85","BIN86","BIN87","BIN88","BIN89","BIN90","BIN91","BIN92","BIN93","BIN94","BIN95","BIN96","BIN97","BIN98","BIN99","BIN100","BIN101","BIN102","BIN103","BIN104","BIN105","BIN106","BIN107","BIN108","BIN109","BIN110","BIN111","BIN112","BIN113","BIN114","BIN115","BIN116","BIN117","BIN118","BIN119","BIN120","BIN121","BIN122","BIN123","BIN124","BIN125","BIN126","BIN127","BIN128","Snapshot","threshold","SampleNumber","FlowCounts","DeltaTime","BufferOverrun","LaserMonitor","ElectronicCounts","CountPeriod","LaserVoltage")
+	# dfNames <- c("UTC","latitude","longitude","scan.count","pressure","depth","temp","cond","DO.43.mg.L","DO43...sat","DO.optode","optode.T","BAT","fpb_year","fpb_month","fpb_day","fpb_hour","fpb_min","fpb_second","depth.1","temp.1","green","bluegreen","diatom","crypto","unused","unused.1","unused.2","YS","total","transmission","pf_date","pf_time","Fo","Fm","blank","Fv","Yield","BIN1","BIN2","BIN3","BIN4","BIN5","BIN6","BIN7","BIN8","BIN9","BIN10","BIN11","BIN12","BIN13","BIN14","BIN15","BIN16","BIN17","BIN18","BIN19","BIN20","BIN21","BIN22","BIN23","BIN24","BIN25","BIN26","BIN27","BIN28","BIN29","BIN30","BIN31","BIN32","BIN33","BIN34","BIN35","BIN36","BIN37","BIN38","BIN39","BIN40","BIN41","BIN42","BIN43","BIN44","BIN45","BIN46","BIN47","BIN48","BIN49","BIN50","BIN51","BIN52","BIN53","BIN54","BIN55","BIN56","BIN57","BIN58","BIN59","BIN60","BIN61","BIN62","BIN63","BIN64","BIN65","BIN66","BIN67","BIN68","BIN69","BIN70","BIN71","BIN72","BIN73","BIN74","BIN75","BIN76","BIN77","BIN78","BIN79","BIN80","BIN81","BIN82","BIN83","BIN84","BIN85","BIN86","BIN87","BIN88","BIN89","BIN90","BIN91","BIN92","BIN93","BIN94","BIN95","BIN96","BIN97","BIN98","BIN99","BIN100","BIN101","BIN102","BIN103","BIN104","BIN105","BIN106","BIN107","BIN108","BIN109","BIN110","BIN111","BIN112","BIN113","BIN114","BIN115","BIN116","BIN117","BIN118","BIN119","BIN120","BIN121","BIN122","BIN123","BIN124","BIN125","BIN126","BIN127","BIN128","Snapshot","threshold","SampleNumber","FlowCounts","DeltaTime","BufferOverrun","LaserMonitor","ElectronicCounts","CountPeriod","LaserVoltage")
+	dfNames <- c("UTC","latitude","longitude","scan.count","depth","temp","cond","BAT","DO.43.mg.L","DO43...sat","fpb_year","fpb_month","fpb_day","fpb_hour","fpb_min","fpb_second","depth.1","temp.1","green","bluegreen","diatom","crypto","unused","unused.1","unused.2","YS","total","transmission","pf_date","pf_time","Fo","Fm","blank","Fv","Yield","BIN1","BIN2","BIN3","BIN4","BIN5","BIN6","BIN7","BIN8","BIN9","BIN10","BIN11","BIN12","BIN13","BIN14","BIN15","BIN16","BIN17","BIN18","BIN19","BIN20","BIN21","BIN22","BIN23","BIN24","BIN25","BIN26","BIN27","BIN28","BIN29","BIN30","BIN31","BIN32","BIN33","BIN34","BIN35","BIN36","BIN37","BIN38","BIN39","BIN40","BIN41","BIN42","BIN43","BIN44","BIN45","BIN46","BIN47","BIN48","BIN49","BIN50","BIN51","BIN52","BIN53","BIN54","BIN55","BIN56","BIN57","BIN58","BIN59","BIN60","BIN61","BIN62","BIN63","BIN64","BIN65","BIN66","BIN67","BIN68","BIN69","BIN70","BIN71","BIN72","BIN73","BIN74","BIN75","BIN76","BIN77","BIN78","BIN79","BIN80","BIN81","BIN82","BIN83","BIN84","BIN85","BIN86","BIN87","BIN88","BIN89","BIN90","BIN91","BIN92","BIN93","BIN94","BIN95","BIN96","BIN97","BIN98","BIN99","BIN100","BIN101","BIN102","BIN103","BIN104","BIN105","BIN106","BIN107","BIN108","BIN109","BIN110","BIN111","BIN112","BIN113","BIN114","BIN115","BIN116","BIN117","BIN118","BIN119","BIN120","BIN121","BIN122","BIN123","BIN124","BIN125","BIN126","BIN127","BIN128","Snapshot","threshold","SampleNumber","FlowCounts","DeltaTime","BufferOverrun","LaserMonitor","ElectronicCounts","CountPeriod","LaserVoltage")
+	
 		# "BBE_time","Phyto_time","timePassSecond")
 	SeabirdCount = 0
 	LOPCCount = 0
@@ -129,7 +132,7 @@ readingRawFile <- function(filename){
 			LOPCCount <- LOPCCount+1
 			newLOPC <- TRUE
 		}
-		else if("S" %in% line && length(line) == 11){
+		else if("S" %in% line && length(line) == 8){  # previous file has 11
 			if(newLOPC){
 				Seabird_line <- line[-1]
 				newLOPC <- FALSE
@@ -148,6 +151,9 @@ readingRawFile <- function(filename){
 			geo_Line <- line[-1][c(1,2,4)]
 			geoCount <- geoCount+1
 		}
+	}
+	if(SeabirdCount<1){
+		stop("Wrong Seabird Data")
 	}
 	data <- as.data.frame(do.call(rbind,data))
 	data <- data[-1,]
@@ -207,6 +213,8 @@ readingRawFile <- function(filename){
 	if(geoCount<3){
 		return(NA)
 	}else{
+		geoNA <- is.na(data$DDLong) | is.na(data$DDLat)
+		data <- data[!geoNA,]
 		tmp<- distanceSpeedCalculation(data[,c("timePassSecond","DDLong","DDLat")])
 		data$shipSpeed <- tmp$shipSpeed
 		data$Distance <- tmp$distance

@@ -1,12 +1,17 @@
 require("leaflet")
 config <- list()
 
+#####
+# install.packages(c("leaflet","ggplot2","sp","gstat","RColorBrewer","rgl","dplyr","ggmap","lubridate","dismo","rglwidget","shiny","reshape2","dygraphs"))
+#####
+
+
 ###########################
 ### Data File settings ####
 ###########################
 
 config$BBE_name <- c("total","green","bluegreen","diatom")
-config$Seabird_name <- c("Seabird_temperature","DO","DOsat","conductivity","BAT","Spec.Cond","pressure")
+config$Seabird_name <- c("Seabird_temperature","DO","DOsat","conductivity","BAT","Spec.Cond")
 config$LOPC_name <- c("Zdens","Zug")
 config$varUnit <- c(
 	Seabird_temperature="Temperature (C)",
@@ -27,13 +32,14 @@ config$factorColor <- colorFactor(c("blue4","white","red","blue","yellow","green
 # the hotspot neighbor size
 config$depth_distance_ratio <- 1
 config$nbrange <- 0.75
-# config$nbrange <- 1.5
+
 
 # Interpolation 
 config$maxdist <- 0.33
 config$separate <- TRUE
 config$tpsDf <- 10  # tps detrending results
-config$K <- c(1,5)  # stretch factors after scale to 0,1
+config$K <- c(1,5)  # y axis stretch factors after scale to [0,1]
+config$model <- "Sph"
 # config$gridSize=c(dx=0.2,dy=0.25) # grid size dx in KM unit and dy in m unit
 config$gridSize=c(dx=0.2,dy=0.25) #
 config$interestVar <- c("Seabird_temperature","Spec.Cond","DO","DOsat","total","BAT","Zdens","Zug") # config$interestVar <- c("Zdens") for test

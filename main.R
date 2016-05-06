@@ -35,7 +35,7 @@ main<- function(newfile,oldResult,seabirdIndex,bbeIndex,seabird_cutoff,newResult
 		saveRDS(allTriaxus,oldResult)
 	}
 
-	return(myTriaxus) 
+	# return(myTriaxus) 
 }
 
 calculate <- function(){
@@ -122,12 +122,21 @@ paperPlotSub <- function(triaxusFile,transmatrix,riverMouth,K){
 	dev.off()
 }
 
-#calculate()
+# calculate()
 # paper_plot()
 
 # main<- function(newfile,oldResult,seabirdIndex,bbeIndex,seabird_cutoff,newResult=FALSE){
 # newFile <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/transect_5_night_1.dat"
-newFile <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/NS_2013_HU3_HU4_1.dat"
+#newFile <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/NS_2013_HU3_HU4_1.dat"
+#filename <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/transect_5_night_1.dat"
 
 # tmp <- main(newFile,"test.rds",1298,1257,c(500,3000),newResult = TRUE)
-tmp <- main(newFile,"test.rds",4283,4245,c(300,8000),newResult = TRUE)
+# tmp <- main(newFile,"test.rds",4283,4245,c(300,8000),newResult = TRUE)
+
+# tmp <- main("/Users/WenzhaoXu/Developer/Triaxus/input/LOPCData/NS_2013_HU6_HU7_1.dat","test.rds",1359,1323,c(400,0),newResult = TRUE)
+# tmp <- main("/Users/WenzhaoXu/Developer/Triaxus/input//LOPCData/NS_2013_HU7_HU8_3.dat","test.rds",3484,3446,c(3500,0),newResult = TRUE)
+tmp <- main("/Users/WenzhaoXu/Developer/Triaxus/input/LOPCData/NS_2013_HU7_HU8_5.dat","test.rds",230,194,c(0,1500),newResult = TRUE)
+# tmp <- main("/Users/WenzhaoXu/Developer/Triax11us/input/LOPCData/transect_5_day_1.dat","test.rds",2005,1964,c(1250,0),newResult = TRUE)
+
+
+

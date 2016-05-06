@@ -60,10 +60,10 @@ preprocessing <- function(Triaxus){
 	Triaxus@cleanData <- Triaxus@cleanData[finalStartNodes:finalEndNodes,]
 
 	# Adding salinity and density estimation.
-	tmpData <- Triaxus@cleanData[,c("latitude","longitude","pressure","conductivity")]
+	tmpData <- Triaxus@cleanData[,c("latitude","longitude","conductivity")]
 	tmpData$temperature <- Triaxus@cleanData$Seabird_temperature
-	densityData <- cal_density(tmpData)
-	Triaxus@cleanData <- cbind(Triaxus@cleanData,densityData)
+	# densityData <- cal_density(tmpData)
+	# Triaxus@cleanData <- cbind(Triaxus@cleanData,densityData)
 
 	
 	Triaxus@numCycle <- (length(Seabird_separation[[2]])-1)/2-1
@@ -75,7 +75,7 @@ preprocessing <- function(Triaxus){
 initProcess <- function(dataSet){
 	# dataSet <- na.omit(dataSet)
 	print(summary(dataSet))
-	dataSet <- dplyr::select(dataSet,-c(latitude,longitude,DO.optode,optode.T))
+	dataSet <- dplyr::select(dataSet,-c(latitude,longitude))
 	dataSet <- dplyr::rename(dataSet,BBE_depth=depth.1,Seabird_depth=depth,Seabird_temperature=temp,
 		BBE_temperature=temp.1,distance=Distance,DO=DO.43.mg.L,DOsat=DO43...sat,latitude=DDLat,longitude=DDLong,conductivity = cond)
 	
