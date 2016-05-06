@@ -30,7 +30,7 @@
 <p>Currently the application should run in a local R shiny mode.  We provide sample data from Manitowoc site to illustrate how to use the application.The example data can be downloaded here. After download the source code:</p>
 
 <ul>
-<li>Step 0: Modify config.R</li>
+<li>Step 0: Modify config.R and install packages</li>
 </ul>
 
 <p>In config.R, change </p>
@@ -43,7 +43,15 @@
 <pre><code>config$outputFolder &lt;- $your_output_folder
 </code></pre>
 
-<p>The analyzed results will be stored in this local folder. </p>
+<p>The analyzed results will be stored in this local folder, and run the following to install packages</p>
+
+<pre><code>
+install.packages(c("leaflet","ggplot2","sp","gstat","RColorBrewer","rgl","dplyr","ggmap","lubridate","dismo","rglwidget","shiny","reshape2","dygraphs"))
+</code></pre>
+
+
+
+
 
 <ul>
 <li>Step 1: Upload the file</li>
