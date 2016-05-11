@@ -28,13 +28,13 @@ To use:
 	
 where 
 
-	config: list defined in config.R
-	newFile: newfile name, can take .dat LOPC rawfile or csv file
-	seabirdIndex, bbeIndex:  the index of seabird data and bbe data that represents the same valley points. Need to determine manually 
-	seabird_cutoff:  a vector contains the start and end index for the
-	separate: whether to separate upcast and downcast before analyzing
-	rawData: bind data to the class rather than reading the data. If set, no reading file is performed
-	realName: for web app only since the file uploaded may not preserve the original name
+*	config: list defined in config.R
+*	newFile: newfile name, can take .dat LOPC rawfile or csv file (sample file can be downloaded here [link](https://www.dropbox.com/sh/jezabaryohpfdnf/AABCzXVb0AVOPhRmDVgX538-a?dl=0))
+*	seabirdIndex, bbeIndex:  the index of seabird data and bbe data that represents the same valley points. Need to determine manually 
+*	seabird_cutoff:  a vector contains the start and end index for the
+*	separate: whether to separate upcast and downcast before analyzing
+*	rawData: bind data to the class rather than reading the data. If set, no reading file is performed
+*	realName: for web app only since the file uploaded may not preserve the original name
 	
 To interpolate:
 
