@@ -1,4 +1,4 @@
-# Towed Undulating Analyzing
+# Towed Undulating Vehicles Analyzing Tool
 	
 This folder creates a tool to analyze Towed undulating data, especially for Triaxus TUV data.
 
