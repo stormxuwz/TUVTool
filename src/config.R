@@ -38,11 +38,13 @@ config$nbrange <- 0.75
 config$maxdist <- 0.33
 config$separate <- TRUE
 config$tpsDf <- 10  # tps detrending results
-config$K <- c(1,5)  # y axis stretch factors after scale to [0,1]
+config$K <- c(1,5)  # y axis scale factor range after scaled to [0,1]
 config$model <- "Sph"
-# config$gridSize=c(dx=0.2,dy=0.25) # grid size dx in KM unit and dy in m unit
-config$gridSize=c(dx=0.2,dy=0.25) #
+config$gridSize=c(dx=0.2,dy=0.25) # grid size dx in KM unit and dy in m unit
+
 config$interestVar <- c("Seabird_temperature","Spec.Cond","DO","DOsat","total","BAT","Zdens","Zug") # config$interestVar <- c("Zdens") for test
-# config$interestVar <- c("BAT")
+# config$interestVar <- c("BAT") # for test only
+
 # output folder
 config$outputFolder <- "~/Developer/Triaxus/output/"
+config$variogramMetaFolder <- NULL   # For example "~/Developer/Triaxus/output/variogram/",  Set NULL not to plot variogram

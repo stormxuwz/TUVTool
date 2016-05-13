@@ -291,13 +291,16 @@ variogram_fitting <- function(g,plotid){
 	# v_model <- v_model_gau
 	bestModel <- kgmodel
 
-	pdf(file=paste("~/Developer/Triaxus/output/variogram/",plotid,"_krig_meta.pdf",sep=""))
-   	par(mfrow=c(2,2))
-   	print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
-   	print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range"),pl=T))
-    print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel,"range = ",localRange),pl=T))
-    print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
-  	dev.off()
+	if(!is.null(config$variogramMetaFolder)){
+		pdf(file=paste(config$variogramMetaFolder,plotid,"_krig_meta.pdf",sep=""))
+	   	par(mfrow=c(2,2))
+	   	print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
+	   	print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range"),pl=T))
+	    print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel,"range = ",localRange),pl=T))
+	    print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
+	  	dev.off()
+	}
+	
 
   	
     # print(plot(v_2direction,v_model_gau2,main=paste("2 Direction Variogram in Kriging Range gau2"),pl=T))
