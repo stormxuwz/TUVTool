@@ -10,7 +10,6 @@ library(rgl)
 library(rglwidget)
 library(ggplot2)
 source("plot.R")
-library(plotly)
 library(dplyr)
 
 source("config.R")
