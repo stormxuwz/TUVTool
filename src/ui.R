@@ -18,7 +18,7 @@ shinyUI(
 
 					selectInput("detrendingMethod", 
   						label = h5("Detrending Method"), 
-        				choices = list("Thin Plate Spline" = "tps", "Linear Regression" = "linear"), 
+        				choices = list("Thin Plate Spline" = "tps", "Loess" = "linear"), 
         				selected = "lm"),
 
 					selectInput("InterpolationMethod", 

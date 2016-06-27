@@ -709,11 +709,14 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode",
-		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src"
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode"
 	],
 	"file_history":
 	[
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/ui.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/config.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/interpolation.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/server.R",
 		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/main.R",
 		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/Triaxus.sublime-project",
 		"/Users/WenzhaoXu/Developer/DO_Sensor_data/tmp3.R",
@@ -837,15 +840,11 @@
 		"/Users/WenzhaoXu/Downloads/DO_visualization_threejs-master/index.html",
 		"/Users/WenzhaoXu/Downloads/DO_visualization_threejs-master/js/dataBase.php",
 		"/Users/WenzhaoXu/Downloads/DO_visualization_threejs-master/js/button.js",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/createGrid.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/tmp.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/main.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/plot_func.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/netcd.R"
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/createGrid.R"
 	],
 	"find":
 	{
-		"height": 28.0
+		"height": 40.0
 	},
 	"find_in_files":
 	{
@@ -945,7 +944,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 28.0
+		"height": 32.0
 	},
 	"input":
 	{
@@ -986,7 +985,7 @@
 	"project": "Triaxus.sublime-project",
 	"replace":
 	{
-		"height": 52.0
+		"height": 60.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -995,6 +994,14 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"ui",
+				"src/ui.R"
+			],
+			[
+				"ser",
+				"src/server.R"
+			],
 			[
 				"pre",
 				"source/preprocessing.R"
@@ -1022,10 +1029,6 @@
 			[
 				"inter",
 				"source/interpolation.R"
-			],
-			[
-				"ui",
-				"ui.R"
 			],
 			[
 				"dis",

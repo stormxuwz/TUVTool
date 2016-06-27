@@ -169,7 +169,7 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 		# print(summary(varVal))
 		# print(varVal)
 		valColor <- coloPal(varVal)
-		# z[naIndex] <- NA
+		#z[naIndex] <- NA
 		z_tmp <- t(matrix(z,length(y_tmp),length(x_tmp)))
 		col_tmp <- t(matrix(valColor,length(y_tmp),length(x_tmp)))
 		surface3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
