@@ -62,12 +62,21 @@ setMethod("initialize","Base_Triaxus",
 					Seabird_cutoff[i]  <- 1
 				}
 
+				if(Seabird_cutoff[i]>nrow(.Object@rawData)){
+					Seabird_cutoff[i]  <- 1
+				}
+
 				if(Seabird_cutoff[i+1]<1){
+					Seabird_cutoff[i+1] <- nrow(.Object@rawData)
+				}
+
+				if(Seabird_cutoff[i+1]>nrow(.Object@rawData)){
 					Seabird_cutoff[i+1] <- nrow(.Object@rawData)
 				}
 				cutoff <- c(cutoff,Seabird_cutoff[i]:Seabird_cutoff[i+1])
 			}
 			.Object@Seabird_cutoff <- cutoff
+			print(cutoff)
 		}
 		return(.Object)
 	}
