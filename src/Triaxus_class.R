@@ -76,7 +76,7 @@ setMethod("initialize","Base_Triaxus",
 				cutoff <- c(cutoff,Seabird_cutoff[i]:Seabird_cutoff[i+1])
 			}
 			.Object@Seabird_cutoff <- cutoff
-			print(cutoff)
+			# print(cutoff)
 		}
 		return(.Object)
 	}
