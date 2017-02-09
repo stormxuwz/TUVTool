@@ -38,16 +38,39 @@ plot_raw <- function(Triaxus,var){
 	return(p)
 }
 
-plot_2d <- function(Triaxus,var){
-	visdata <- Triaxus@resultData[,c(var,"distance","depth")]
+plot_raw_down <- function(Triaxus,var){
+	visdata <- subset(Triaxus@cleanData,direction == -1)[,c(var,"distance","depth")]
 	colorRange <- range(c(range(Triaxus@cleanData[,var],na.rm = TRUE),range(Triaxus@resultData[,var],na.rm = TRUE)))
-	print(colorRange)
+	
 	names(visdata)[1] <- "value"
-	p <- ggplot(visdata)+geom_tile(aes(distance,-depth,fill=value))+scale_fill_gradientn(colours = topo.colors(10),name=config$varUnit[var],limits=colorRange)
-	p <- p+geom_point(aes(distance,-depth),data=Triaxus@cleanData,alpha=0.5)
+	p <- ggplot(visdata)+geom_point(aes(distance,-depth,color=value))+scale_color_gradientn(colours = topo.colors(10),name=config$varUnit[var],limits=colorRange)
 	p <- p+xlab("Distance (km)")+ylab("Depth (m)")
 	return(p)
 }
+
+plot_2d <- function(Triaxus,var){
+	visdata <- Triaxus@resultData[,c(var,"distance","depth")]
+	colorRange <- range(c(range(Triaxus@cleanData[,var],na.rm = TRUE),range(Triaxus@resultData[,var],na.rm = TRUE)))
+	# print(colorRange)
+	names(visdata)[1] <- "value"
+	p <- ggplot(visdata)+geom_tile(aes(distance,-depth,fill=value))+scale_fill_gradientn(colours = topo.colors(10),name=config$varUnit[var],limits=colorRange)
+	p <- p+geom_point(aes(distance,-depth),data=Triaxus@cleanData,alpha=0.1)
+	p <- p+xlab("Distance (km)")+ylab("Depth (m)")
+	return(p)
+}
+
+
+plot_2d_contour <- function(Triaxus,var){
+	visdata <- Triaxus@resultData[,c(var,"distance","depth")]
+	colorRange <- range(c(range(Triaxus@cleanData[,var],na.rm = TRUE),range(Triaxus@resultData[,var],na.rm = TRUE)))
+	# print(colorRange)
+	names(visdata)[1] <- "value"
+	p <- ggplot(visdata)+geom_tile(aes(distance,-depth,fill=value))+scale_fill_gradientn(colours = topo.colors(10),name=config$varUnit[var],limits=colorRange)+stat_contour(aes(distance,-depth,z = value), colour = "black",alpha = 0.5)
+	# p <- p+geom_point(aes(distance,-depth),data=Triaxus@cleanData,alpha=0.1)
+	p <- p+xlab("Distance (km)")+ylab("Depth (m)")
+	return(p)
+}
+
 
 plot_hotspot <- function(Triaxus,var){
 	visdata <- Triaxus@hotspotData[,c(var,"distance","depth")]
@@ -84,7 +107,7 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 			else{
 				allVar <- factor(allVar)
 				# coloPal <- colorFactor(topo.colors(5), allVar,na.color = NA)
-				factorLevels <- levels(allVar)
+				# factorLevels <- levels(allVar)
 			}
 			# print("coloPal is a factor coloPal")
 		}else{
@@ -169,7 +192,7 @@ plot_3d_base <- function(dataList,isFactor=FALSE,hotspot=FALSE,...){
 		# print(summary(varVal))
 		# print(varVal)
 		valColor <- coloPal(varVal)
-		#z[naIndex] <- NA
+		z[naIndex] <- NA # comment this to compatible with RGL in Rshiny 
 		z_tmp <- t(matrix(z,length(y_tmp),length(x_tmp)))
 		col_tmp <- t(matrix(valColor,length(y_tmp),length(x_tmp)))
 		surface3d(x_tmp,y_tmp,z_tmp,col=col_tmp,add=T,xlab="depth",ylab="Lat",zlab="Long")
@@ -198,8 +221,8 @@ plot_3d_hotspot <- function(allTriaxus,var,...){
 		rawSub <- myTriaxus@hotspotData[,c(var,"longitude","latitude","depth")]
 		rawHotspot <- rawSub[,var]
 		rawSub[,var] <- 0
-		rawSub[,var] <- ifelse(rawHotspot<(-3),-1,rawSub[,var])
-		rawSub[,var] <- ifelse(rawHotspot>3,1,rawSub[,var])
+		rawSub[,var] <- ifelse(rawHotspot<(-3.89),-1,rawSub[,var])
+		rawSub[,var] <- ifelse(rawHotspot>3.89,1,rawSub[,var])
 		rawSub[,var] <- as.factor(rawSub[,var])
 		dataList[[myTriaxus@pathName]] <- rawSub
 		names(dataList[[myTriaxus@pathName]])[1] <- "val"
@@ -231,12 +254,12 @@ plot_boxplot <- function(allTriaxus,variables,K){
 	totalData$cluster <- factor(totalData$cluster)
 	
 	plot_theme <- theme(axis.title.x=element_blank(),axis.text.x=element_text(size=6.5,face="bold"),axis.title.y=element_text(size=6.5,face="bold"),
-      axis.text.y=element_text(size=6.5,face="bold"),plot.margin = unit(c(0.1,0.1,0.1,0),"cm"))
+      axis.text.y=element_text(size=6.5,face="bold"),plot.margin = unit(c(0.1,0.1,0.1,0),"cm"), legend.position = "None")
 
 	plot.list <- lapply(variables, function(x){
 		subData <- na.omit(totalData[,c("cluster",x)]);
 		# trans=ggplot(aes(as.factor(cluster),transmission),data=dataSet[dataSet$transmission>0,])+geom_boxplot(outlier.size=0.5)+xlab("Cluster")+ylab("Transmission")+plot_theme
-		ggplot()+geom_boxplot(aes(x = subData$cluster, y=subData[, x]),outlier.size=0.2)+ylab(config$varUnit[x])+plot_theme
+		ggplot()+geom_boxplot(aes(x = subData$cluster, y=subData[, x],fill=subData$cluster),outlier.size=0.2)+scale_fill_manual(values = c("#FF0000","#436EEE", "#FFFF00"), breaks = c("1", "2", "3"))+ylab(config$varUnit[x])+plot_theme
 	})
 
 	args.list <- c(plot.list,list(nrow=2,ncol=length(plot.list)/2))

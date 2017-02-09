@@ -1,4 +1,5 @@
 # source("./src/rawFileParser.R")
+require(methods)
 setClass(
 	"Base_Triaxus",
 	slots = c(

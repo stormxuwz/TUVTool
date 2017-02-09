@@ -36,7 +36,7 @@ clustering_sub <- function(dataSet,K){
   print(K)
   dataSet <- scale(dataSet)
   dataSet <- round(dataSet,2)
-  kmcluster=kmeans(dataSet,centers=K,nstart = 30,iter.max=40)
+  kmcluster <- kmeans(dataSet,centers=K,nstart = 30,iter.max=40)
   dissE <- daisy(dataSet)
   sk <- silhouette(kmcluster$cluster, dissE^2)
   avgSw <- summary(sk)$avg.width

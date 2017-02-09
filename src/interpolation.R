@@ -1,8 +1,68 @@
 #### This is the main part for krig Interpolation, with following functions
-## 1: kriging Interpolation
-## 2: GA variogram fit
-# require("GA")
-interpolation_main <- function(Triaxus,int_method,det_method=NULL){
+
+
+crossValidataion <- function(data,K=5,R=100,int_method, det_method, plotid, maxdist){
+	require(cvTools)
+	n <- nrow(data)
+	cvIndex <- cvFolds(n,K = K,R = R)
+	cvFoldIndex <- cvIndex$which
+
+	RMS_error <- matrix(-99, nrow = R, ncol = K)
+	max_error <- matrix(-99,nrow = R, ncol = K)
+	dataRange <- matrix(-99,nrow = R, ncol = K)
+	meanError <- matrix(-99, nrow = R, ncol = K)
+	ratioError <- matrix(-99, nrow = R, ncol = K)
+	dataMean <- matrix(-99, nrow = R, ncol = K)
+	dataMean_whole <- matrix(-99, nrow = R, ncol = K)
+	dataRange_whole <- matrix(-99, nrow = R, ncol = K)
+	dataMedian <- matrix(-99, nrow = R, ncol = K)
+	dataMedian_whole <- matrix(-99, nrow = R, ncol = K)
+
+	for(i in 1:R){
+		for(fold in 1:K){
+			print(paste("cv progress:",i,fold))
+			testIndex <- cvIndex$subsets[cvFoldIndex==fold,i]
+			trainIndex <- c(1:n)[-testIndex]
+
+			trainData <- data[trainIndex,]
+			testData <- data[testIndex,]
+			testData$availableIndex <- TRUE
+			capture.output(cvRes <- interpolation_sub(trainData,testData[,c("distance","depth","availableIndex")],int_method,det_method,plotid = paste(plotid,"_cvwhole",sep=""),maxdist = maxdist))
+			
+			dataRange[i,fold] <- diff(range(testData[,1]),na.rm=TRUE)
+			RMS_error[i,fold] <- sqrt(mean((cvRes-testData[,1])^2,na.rm = TRUE))
+			max_error[i,fold] <- max(abs(cvRes-testData[,1]),na.rm = TRUE)
+			meanError[i,fold] <- mean(cvRes-testData[,1], na.rm = TRUE)
+			ratioError[i, fold] <-mean(abs(cvRes-testData[,1]/testData[,1]), na.rm = TRUE) 
+			
+			dataMean[i, fold] <- mean(testData[,1],na.rm = TRUE)
+			dataMedian[i,fold]  <- median(testData[,1],na.rm = TRUE)
+
+			dataMean_whole[i,fold] <- mean(data[,1],na.rm=TRUE)
+			dataRange_whole[i,fold] <- diff(range(data[,1],na.rm=TRUE))
+			dataMedian_whole[i, fold] <- median(data[,1],na.rm = TRUE)
+			# print(summary(cvRes-testData[,1]))
+		}
+	}
+	print(RMS_error/dataRange)
+	print(max_error/dataRange)
+	# print("CV ERROR:")
+	# sleep(10000)
+	# print(mean(RMS_error))
+	# print(mean(max_error))
+	return(list(cvIndex = cvIndex, 
+		RMS_error = RMS_error, 
+		dataRange = dataRange, 
+		max_error = max_error,
+		dataMean = dataMean,
+		dataMean_whole = dataMean_whole,
+		dataRange_whole = dataRange_whole))
+}
+
+
+interpolation_main <- function(Triaxus,int_method,det_method=NULL,cv=FALSE,...){
+	
+	# create the grid
 	Triaxus@grid <- createGrid(
 		x=Triaxus@cleanData$distance,
 		y=Triaxus@cleanData$depth,
@@ -11,6 +71,7 @@ interpolation_main <- function(Triaxus,int_method,det_method=NULL){
 		longitude=Triaxus@cleanData$longitude,
 		latitude=Triaxus@cleanData$latitude)
 
+	
 	Triaxus@resultData <- Triaxus@grid
 
 	# maxdist <- ifelse(config$krigingRange/Triaxus@numCycle>0.15,config$krigingRange/Triaxus@numCycle,0.15)
@@ -19,27 +80,42 @@ interpolation_main <- function(Triaxus,int_method,det_method=NULL){
 	# maxdist <- NULL
 	maxdist <- min(max(config$maxdist,3/Triaxus@numCycle),1)
 
-	
 	for(var in Triaxus@config$interestVar){
 		print(var)
-		if(Triaxus@separate == FALSE ){
+		if(Triaxus@separate == FALSE){
 			# | var == "BAT"
 			print("no separating")
 			plotid <- paste(Triaxus@pathName,var,sep="_")
 			outlierIndex <- init_filter(Triaxus@cleanData[,var],var)
-			pred <- interpolation_sub(Triaxus@cleanData[outlierIndex<1,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_whole",sep=""),maxdist = maxdist)
+			pred <- interpolation_sub(Triaxus@cleanData[outlierIndex<1,c(var,"distance","depth")],
+				Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_whole",sep=""),maxdist = maxdist)
 			Triaxus@resultData[,var] <- ifelse(pred>0,pred,0)
 		}else{
 			plotid <- paste(Triaxus@pathName,var,sep="_")
 	  		outlierIndex <- init_filter(Triaxus@cleanData[,var],var)
-	    	pred_down <- interpolation_sub(subset(Triaxus@cleanData[outlierIndex<1,],direction==-1)[,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_down",sep=""),maxdist = maxdist)
-	    	pred_up <- interpolation_sub(subset(Triaxus@cleanData[outlierIndex<1,],direction==1)[,c(var,"distance","depth")],Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_up",sep=""),maxdist = maxdist)
-	    	finalPrediction <- (pred_down+pred_up)/2.0
-	    	Triaxus@resultData[,var] <- ifelse(finalPrediction>0,finalPrediction,0)
+	    	
+	    	downData <- subset(Triaxus@cleanData[outlierIndex<1,],direction==-1)[,c(var,"distance","depth")]
+	    	upData <- subset(Triaxus@cleanData[outlierIndex<1,],direction==1)[,c(var,"distance","depth")]
+	    	
+	    	if(cv & config$meta){
+				dir.create(file.path(config$outputFolder, "meta/cv"), showWarnings = FALSE)
+	    		print("starting cross validation")
+	    		# K is the fold of the CV, R is the times for CV
+	    		saveRDS(crossValidataion(downData,K=3,R=10,int_method,det_method,plotid = paste(plotid,"_down",sep=""),maxdist = maxdist),
+	    			file = paste(config$outputFolder,"/meta/cv/",plotid,"_cv_down.rds",sep=""))
+	    		saveRDS(crossValidataion(upData,K=3,R=10,int_method,det_method,plotid = paste(plotid,"_up",sep=""),maxdist = maxdist),
+	    			file = paste(config$outputFolder,"/meta/cv/",plotid,"_cv_up.rds",sep=""))
+	    	}
+	    	# else{
+    		pred_down <- interpolation_sub(downData,Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_down",sep=""),
+    			maxdist = maxdist)
+    		pred_up <- interpolation_sub(upData,Triaxus@grid,int_method,det_method,plotid = paste(plotid,"_up",sep=""),
+    			maxdist = maxdist)
+    		finalPrediction <- (pred_down+pred_up)/2.0
+    		Triaxus@resultData[,var] <- ifelse(finalPrediction>0,finalPrediction,0)
+	    	# }
 		}		
 	}
-
-
 	# Triaxus@grid$available <- !as.logical(apply(is.na(Triaxus@resultData[,Triaxus@config$interestVar]),1,sum)) # update
 	return(Triaxus)
 }
@@ -63,9 +139,17 @@ interpolation_sub <- function(dataSet,grid,int_method,det_method,...){
     detrending_result <- detrending(dataSet,grid[availableIndex,],method=det_method)
     dataSet$res <- detrending_result$res
 
+    # save the TPS trend data
+    if(config$meta){
+		dir.create(file.path(config$outputFolder, "meta/detrending"), showWarnings = FALSE)
+    	saveRDS(list(dataset = dataSet,df = detrending_result$df),
+    	file = paste0(config$outputFolder,"/meta/detrending/",list(...)$plotid,"_trend.rds"))
+    }
+    
     outlierIndex <- spatialOutlier(dataSet,1,0.75,4)
     print(paste("outlier Num:",sum(outlierIndex)))
     dataSet <- dataSet[outlierIndex<1,]
+	
 	if(int_method=="krige"){
   		pred_res <- interpolation_krig(dataSet,grid[availableIndex,],idw=FALSE,...)
 	} 
@@ -77,9 +161,7 @@ interpolation_sub <- function(dataSet,grid,int_method,det_method,...){
 	}
 
     pred[availableIndex] <- detrending_result$trendSurface+pred_res
-    # print(hist(dataSet$res))
-    # print(summary(dataSet[,1]))
-    # print(summary(pred))
+
     return(pred)
 }
 
@@ -106,6 +188,7 @@ createGrid <- function(x,y,dx,dy,longitude,latitude){
 
 interpolation_tps<-function(spData,grid,...){
   	require(fields)
+	  
   	subSample <- seq(1,nrow(spData),by=1)
   	tpsModel <- Tps(spData[subSample,c("distance","depth")],spData[subSample,1])
   	# print(summary(tpsModel))
@@ -114,13 +197,20 @@ interpolation_tps<-function(spData,grid,...){
   	
   	pred <- predict(tpsModel,grid[,c("distance","depth")])
 
+  	spData$res <- tpsModel$residuals
+  	
   	plotid <- list(...)$plotid
-  	pdf(file=paste("~/Developer/Triaxus/output/meta/",plotid,"_tpsInt.pdf",sep=""))
-  	# qplot(distance,depth,data=spData[subSample,],color=pred)
-  	print(qplot(distance,depth,data=spData[subSample,],color=spData[subSample,1]))
-	print(qplot(distance,depth,data=spData[subSample,],color=tpsModel$residuals)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0))
-  	print(qplot(distance,depth,data=spData[subSample,],color=tpsModel$residuals/spData[subSample,1])+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0))
-  	dev.off()
+
+  	if(config$meta){
+  		dir.create(file.path(config$outputFolder, "meta/tps"), showWarnings = FALSE)
+  		saveRDS(list(tpsModel,spData),file = paste0(config$outputFolder,"/meta/tps/",plotid,"_tpsModel.rds"))
+  		pdf(file=paste(config$outputFolder,"/meta/tps/",plotid,"_tpsInt.pdf",sep=""))
+	  	print(qplot(distance,-depth,data=spData[subSample,],color=spData[subSample,1]))
+		print(qplot(distance,-depth,data=spData[subSample,],color=tpsModel$residuals)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name = "Residual"))
+	  	print(qplot(distance,-depth,data=spData[subSample,],color=tpsModel$residuals/spData[subSample,1])+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name = "Residual Ratio"))
+	  	dev.off()
+  	}
+
   	return(pred)
 }
 
@@ -149,22 +239,19 @@ interpolation_krig <- function(spData,grid,idw,...){
  	var_formu=as.formula(paste("res","~1"))
  	# print(list(...)$maxdist)
  	if(idw==TRUE){
- 	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
+ 	    model_gstat <- gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
  	}else{
- 	    model_gstat=gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
+ 	    model_gstat <- gstat(NULL,id=var_name,formula=var_formu,data=spData,maxdist=list(...)$maxdist,nmax = 100,nmin = 20)
 
-		vgmFitting=variogram_fitting(model_gstat,list(...)$plotid)
-		# print(summary(model_gstat$data[[1]]$data@coords[,2] ))
+		vgmFitting <- variogram_fitting(model_gstat,list(...)$plotid)
+
+		# vgmFitting[[2]] is the scaling factor
 		model_gstat$data[[1]]$data@coords[,2] <- model_gstat$data[[1]]$data@coords[,2]*vgmFitting[[2]]
 		model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]])
 		grid$scaled_y <- grid$scaled_y*vgmFitting[[2]]
-		
-		# spData <- remove.duplicates(spData,zero=0.11,remove.second=TRUE)  # remove more points to avoid potential cov singularity
-		# model_gstat<-gstat(model_gstat,id=var_name,model=vgmFitting[[1]], data = spData,nmax = 100 ,nmin = 20)
-		# model_gstat$data[[1]]$data@coords[,2] <- model_gstat$data[[1]]$data@coords[,2]*vgmFitting[[2]]
 	}
  	 coordinates(grid)=~scaled_x+scaled_y
- 	 # print(grid)
+
  	 pred<-predict(model_gstat,grid,debug.level=-1)
  	 print(summary(spData$res))
  	 print(summary(pred[[1]]))
@@ -177,171 +264,116 @@ variogram_fitting <- function(g,plotid){
 	localRange <- g$data[[1]]$maxdist
 	print(paste("localRange:",localRange))
 	g0 <- g
-	Y0=g0$data[[1]]$data@coords[,2];
+	Y0 <- g0$data[[1]]$data@coords[,2]
 	kgmodel <- config$model
 
 	optimFunc <- function(K,g){
+		# function to do optimization
 		g$data[[1]]$data@coords[,2] <- Y0*K
-		v <- variogram(g,cressie=T,alpha=c(0,90),cutoff=localRange,width=localRange/15)
-		v_0 <- subset(v,dir.hor == 0 & np>10)
-		v_90 <- subset(v,dir.hor == 90 & np>10)
-		# v_0 <- subset(v,dir.hor == 0)
-		# v_90 <- subset(v,dir.hor == 90)
 
+		# variogram	
+		v <- variogram(g,cressie=T,alpha=c(0,90),cutoff=localRange,width=localRange/15)
+		v_0 <- subset(v,dir.hor == 0 & np>10)  # 0 direction 
+		v_90 <- subset(v,dir.hor == 90 & np>10) # 90 direction
+		
 		if(nrow(v_0)<1 | nrow(v_90)<1)
 			return(Inf)
-		# print(v)
-		v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=7)
-		# v_0_model <- fit.variogram(v_0,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=7)
 
-		v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=7)
-		# v_90_model <- fit.variogram(v_90,vgm(NA,"Gau",NA,v_0$gamma[1]),fit.method=7)
-		# if(v_0_model$range[2]<0 | v_90_model$range[2]<0)
-			# return(Inf)
-		# v_model <- fit.variogram(v_90,vgm(NA,"Gau",NA,v$gamma[1]),fit.method=7)
-		# a <- max((variogramLine(v_model,dist_vector = v_0$dist)$gamma - v_0$gamma)^2)+max((variogramLine(v_model,dist_vector = v_90$dist)$gamma - v_90$gamma)^2)
-		
+		v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=7) # fit the 0 direction
+		v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=7)  # fit the 90 direction
+
 		if( (v_0_model$range[2])<0 | (v_90_model$range[2])<0){
-			print("bad WLS fit, switch to OLS")
-			# print(K)
-			# print(v_0)
-			# print(v_90)
-			v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=0)
-			v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,v_0$gamma[1]),fit.method=0)
+			print("bad WLS fit, fix nugget = 0 to fit")
+			v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,0),fit.method=7,fit.sill = c(FALSE,TRUE))
+			v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,0),fit.method=7, fit.sill = c(FALSE,TRUE))
+			if((v_0_model$range[2])<0 | (v_90_model$range[2])<0){
+				v_0_model <- fit.variogram(v_0,vgm(NA,kgmodel,NA,0),fit.method=7,fit.sill = c(FALSE,FALSE))
+				v_90_model <- fit.variogram(v_90,vgm(NA,kgmodel,NA,0),fit.method=7, fit.sill = c(FALSE,FALSE))
+			}
 		}
 
-		a <- mean((variogramLine(v_0_model, dist_vector = v_0$dist)$gamma-variogramLine(v_90_model, dist_vector = v_0$dist)$gamma)^2)
-		# print(a)
-		# v_0_model_gau2 <- fit.variogram(v_0,vgm(max(v$gamma)*2,"Gau",localRange*2,v_0$gamma[1]),fit.method=7)
-		# v_90_model_gau2 <- fit.variogram(v_90,vgm(max(v$gamma)*2,"Gau",localRange*2,v_0$gamma[1]),fit.method=7)
-
-
-		# a <- abs(sum(v_0_model$psill)/sum(v_90_model$psill)-1)+abs(v_0_model$range[2]/v_90_model$range[2]-1)+abs(v_0_model$psill[1]/v_90_model$psill[1]-1)
-		# b = abs(sum(v_0_model_exp$psill)/sum(v_90_model_exp$psill)-1)+abs(v_0_model_exp$range[2]/v_90_model_exp$range[2]-1)+abs(v_0_model_exp$psill[1]/v_90_model_exp$psill[1]-1)
-		# a2 <- abs(sum(v_0_model_gau2$psill)/sum(v_90_model_gau2$psill)-1)+abs(v_0_model_gau2$range[2]/v_90_model_gau2$range[2]-1)+abs(v_0_model_gau2$psill[1]/v_90_model_gau2$psill[1]-1)
-		# return(min(a,a2))
-		# a <- a*(1+(K-1)/4)
+		# RMSE of the variogram models
+		dist_vector <- unique(v$dist)
+		a <- mean((variogramLine(v_0_model, dist_vector = dist_vector)$gamma-variogramLine(v_90_model, dist_vector = dist_vector)$gamma)^2)
 		return(a)
 	}
 
-	# miniError=c()
-	# for(K in seq(1,5,0.2)){
-		# print(K)
-		# miniError=c(miniError,optimFunc(K,g))
-	# }
-	# optimK <- seq(0.2,5,0.2)[which.min(miniError)]
+	### change optimK tol from 0.1 to 0.05
+	optimK <- optimize(optimFunc,config$K,g=g0,tol = 0.05)$minimum[1]
 	
-	# optimK <- optim(1, optimFunc,gr=NULL,g0,
- #      method = c("Nelder-Mead"),
- #      lower = 0.2, upper = 10,
- #      control = list(ndeps=0.5), 
- #      hessian = FALSE)$par[1]
-	# for(i in ){
-		# g$data[[1]]$data@coords[,2] <- Y0*K
-		# v <- variogram(g,cressie=T,alpha=c(0,90),cutoff=localRange,width=localRange/15)
-		# v_0 <- subset(v,dir.hor == 0)
-		# v_90 <- subset(v,dir.hor == 90)
-		# if(v_0)
-	# }
-
-	optimK <- optimize(optimFunc,config$K,g=g0,tol = 0.1)$minimum[1]
-	# GA works also good maybe
-	# optimK <- ga(type = "real-valued",fitness = function(x,g) -optimFunc(x,g0), g=g,min = c(1),max = c(5),popSize = 20,maxiter = 10)@solution[1]
-	# K_optins <- seq(1,6,0.2)
-	# optimK <- K_optins[which.min(sapply(K_optins,optimFunc,g=g0))]
-
-
 	print(paste("bestK:",optimK))
-	# print(optimK_normal)
 	print("optim Finish")
+
 	g0$data[[1]]$data@coords[,2] <- Y0*optimK
 	
 	v <- variogram(g0,cressie=T,cutoff=localRange,width=localRange/15)
 	v_model<- fit.variogram(v,vgm(NA,kgmodel,NA,v$gamma[1]),fit.method=7)
-	# v_model<- fit.variogram(v,vgm(NA,"Gau",NA,v$gamma[1]),fit.method=7)
-
 
 	if(v_model$range[2]<0){
-		v_model$range[2] <- 0.02
+		# if the range is not positive, set to positive
+		v_model <- fit.variogram(v,vgm(NA,kgmodel,NA,0),fit.method=7, fit.sill = c(FALSE,TRUE))
+		if(v_model$range[2]<0){
+			v_model <- fit.variogram(v,vgm(NA,kgmodel,NA,0),fit.method=7, fit.sill = c(FALSE,FALSE))
+		}
+		# v_model$range[2] <- 0.02
 	}
-	# v_model_gau2 <- fit.variogram(v,vgm(max(v$gamma)*2,"Gau",localRange,v$gamma[1]),fit.method=7)
+
+	print(v_model)
 	
-  
-  	# v_model_gau_err <- attr(v_model_gau,"SSErr")
-  	# v_model_exp_err <- attr(v_model_exp,"SSErr")
-  	# v_model_gau_err2 <- attr(v_model_gau2,"SSErr")
+	if(config$meta){
+		dir.create(file.path(config$outputFolder, "meta/variogram"), showWarnings = FALSE)
+		bestModel <- kgmodel
+		v_4direction <- variogram(g0,cressie=T,alpha=c(0,45,90,135),cutoff=localRange,width=localRange/15)
+		v_2direction <- variogram(g0,cressie=T,alpha=c(0,90),cutoff=localRange,width=localRange/15)
 
-  	v_4direction <- variogram(g0,cressie=T,alpha=c(0,45,90,135),cutoff=localRange,width=localRange/15)
-	v_2direction <- variogram(g0,cressie=T,alpha=c(0,90),cutoff=localRange,width=localRange/15)
+		v_0 <- subset(v_2direction,dir.hor == 0)
+		v_90 <- subset(v_2direction,dir.hor == 90)
 
-	
-	v_0 <- subset(v_2direction,dir.hor == 0)
-	v_90 <- subset(v_2direction,dir.hor == 90)
-
-	# print(v_model_gau_err)
-	# print(v_model_exp)
-	# if(v_model_gau_err>v_model_exp_err){
-	# 	v_model <- v_model_exp
-	# }else{
-	# 	v_model <- v_model_gau
-	# }
-	# # v_model <- ifelse(v_model_gau_err>v_model_exp_err,v_model_exp,v_model_gau) # This will raise warnings, don't write like this
-	# bestModel <- ifelse(v_model_gau_err>v_model_gau_err2,"Exp","Gau")
-
-	# v_model <- v_model_gau
-	bestModel <- kgmodel
-
-	if(!is.null(config$variogramMetaFolder)){
-		pdf(file=paste(config$variogramMetaFolder,plotid,"_krig_meta.pdf",sep=""))
+		pdf(file=paste(config$outputFolder,"/meta/variogram/",plotid,"_krig_meta.pdf",sep=""))
 	   	par(mfrow=c(2,2))
 	   	print(plot(v_4direction,v_model,main=paste("4 Direction Variogram in Kriging Range"),pl=T))
 	   	print(plot(v_2direction,v_model,main=paste("2 Direction Variogram in Kriging Range"),pl=T))
 	    print(plot(v,v_model,main=paste("omnidirection Variogram in kriging range, model=",bestModel,"range = ",localRange),pl=T))
 	    print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK))+coord_fixed())
-	  	dev.off()
+	    print(qplot(g0$data[[1]]$data@coords[,1],-g0$data[[1]]$data@coords[,2],colour=g$data[[1]]$data$res)+scale_colour_gradient2(low="red",high="blue",mid="white",midpoint=0,name="Residuals")+xlab("Adjusted Distance")+ylab(paste("Adjusted depth","Ratio:",optimK)))
+	    dev.off()
 	}
 	
-
-  	
-    # print(plot(v_2direction,v_model_gau2,main=paste("2 Direction Variogram in Kriging Range gau2"),pl=T))
-
-  
-
-    # print(plot(v_0,v_0_model_sph,main=paste("horizon fit individually"),pl=T))
-    # print(plot(v_90,v_90_model_sph,main=paste("vertical fit individually"),pl=T))
-
-
-  # print(optimK)
 	return(list(v_model,optimK))
 }
 
 
 detrending <- function(dataSet,grid,method){
-  require(fields,,quietly = TRUE)
+  require(fields,quietly = TRUE)
   # print(head(dataSet))
   var_name <- names(dataSet)[1]
   num <- nrow(grid)
-  # print(paste("Detrending on",var_name," ,using",type))
-
+  df <- -1
+  
   if(method=="none"){
-      return(list(trendSurface=rep(0,num),res=dataSet[,1]))
+      return(list(trendSurface=rep(0,num),res=dataSet[,1],df = df))
   }
 
   if(method=="tps"){
-      index=seq(from = 1, to = nrow(dataSet), by = 2)
-      trend_model=Tps(dataSet[index,c("distance","depth")],dataSet[index,1],df=config$tpsDf)
-      pred_orig=predict(trend_model,dataSet[,c("distance","depth")])
+      index <- seq(from = 1, to = nrow(dataSet), by = 2)
+      # df <- max(5,as.integer(length(index)/200))
+      df <- config$tpsDf
+      trend_model <- Tps(dataSet[index,c("distance","depth")],dataSet[index,1],df = df) #df=config$tpsDf
+      pred_orig <- predict(trend_model,dataSet[,c("distance","depth")])
   }
   else if(method=="loess"){
-      var_formu=as.formula(paste(var_name,"~distance+depth"))
-      trend_model=loess(var_formu,data=dataSet,span=0.25)
-      pred_orig=predict(trend_model,dataSet[,2:3])
+      var_formu <- as.formula(paste(var_name,"~distance+depth"))
+      trend_model <- loess(var_formu,data=dataSet,span=0.25)
+      pred_orig <- predict(trend_model,dataSet[,2:3])
+  }else if(method == "linear"){
+  	  var_formu <- as.formula(paste(var_name,"~I(distance)+I(depth)+I(distance*depth)+I(distance^2)+I(depth^2)"))
+  	  trend_model <- lm(var_formu, data = dataSet)
+  	  pred_orig <- predict(trend_model,dataSet[,2:3])
   }
 
-  trendSurface=predict(trend_model,grid[,c("distance","depth")])
-  # print(trendSurface)
-  res=dataSet[,1]-pred_orig
-  return(list(trendSurface=c(trendSurface),res=res))
+  trendSurface <- predict(trend_model,grid[,c("distance","depth")])
+  res <- dataSet[,1]-pred_orig
+  return(list(trendSurface=c(trendSurface),res=res,df = df))
 }
 
 

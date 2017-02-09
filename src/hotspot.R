@@ -2,6 +2,7 @@
 hotspot <- function(mydata,nbrange=0.75,x_y_ratio=1){
   library(spdep,quietly = TRUE)
   library(gridExtra,,quietly = TRUE)
+
   GAvailIndex <- !is.na(mydata[,1])
   mydata <- mydata[GAvailIndex,]
   xycoords <- cbind(mydata$distance*x_y_ratio, mydata$depth)
