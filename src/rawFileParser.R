@@ -132,7 +132,7 @@ readingRawFile <- function(filename){
 			LOPCCount <- LOPCCount+1
 			newLOPC <- TRUE
 		}
-		else if("S" %in% line && length(line) == 8){  # previous file has 11
+		else if("S" %in% line && length(line) == 11){  # previous file has 11
 			if(newLOPC){
 				Seabird_line <- line[-1]
 				newLOPC <- FALSE
