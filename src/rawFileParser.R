@@ -86,13 +86,13 @@ readingRawFile <- function(filename){
 	# filename <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/NS_2013_HU6_HU7_2.dat"
 	# filename <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/transect_5_night_1.dat"
 	print("Starting Parsing raw File")
-	lines <- strsplit(readLines(filename),"\\s+|,")
-	sampleDate <- lines[[2]][c(5,6,8)]
+	lines <- readLines(filename) %>% gsub(","," ",.) %>% strsplit("\\s+")
+	sampleDate <- lines[[2]][c(4,5,6)]
 	sampleDate <- as.Date(paste(sampleDate,collapse = "_"),format = "%B_%d_%Y")
 	
 	data <- list()
 	geo_Line <- rep(NA,3)
-	Seabird_line <- rep(NA,10)
+	Seabird_line <- rep(NA,7) # previous is 10
 	Fluoroprobe_Line <- rep(NA,18)
 	Phytoflash_Line <- rep(NA,7)
 	LOPC_line <- rep(NA,138)
@@ -132,7 +132,7 @@ readingRawFile <- function(filename){
 			LOPCCount <- LOPCCount+1
 			newLOPC <- TRUE
 		}
-		else if("S" %in% line && length(line) == 11){  # previous file has 11
+		else if("S" %in% line && length(line) == 8){  # previous file has 11
 			if(newLOPC){
 				Seabird_line <- line[-1]
 				newLOPC <- FALSE
@@ -147,7 +147,7 @@ readingRawFile <- function(filename){
 			Phytoflash_Line <- line[-1]
 			PhytoflashCount <- PhytoflashCount+1
 		}
-		else if("$GPGGA" %in% line && length(line) == 15){
+		else if("$GPGGA" %in% line && length(line) == 13){ # previous format is 15
 			geo_Line <- line[-1][c(1,2,4)]
 			geoCount <- geoCount+1
 		}
@@ -198,7 +198,7 @@ readingRawFile <- function(filename){
 		}
 	}else{
 		print("no geo data")
-		data$timePassSecond <- sep(0,by=0.5,length.out = nrow(data))
+		data$timePassSecond <- seq(0,by=0.5,length.out = nrow(data))
 	}
 	
 	
