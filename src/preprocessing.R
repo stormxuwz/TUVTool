@@ -143,7 +143,13 @@ init_filter <- function(x,varName){
     threshold["Seabird_temperature"] <- 40
     threshold["Zdens"] <- quantile(x,0.995,na.rm=T)
     threshold["Zug"] <- quantile(x,0.995,na.rm=T)
-
+    threshold["Zdens_small"] <- quantile(x,0.995,na.rm=T)
+    threshold["Zug_small"] <- quantile(x,0.995,na.rm=T)
+    threshold["Zdens_medium"] <- quantile(x,0.995,na.rm=T)
+    threshold["Zug_medium"] <- quantile(x,0.995,na.rm=T)
+    threshold["Zdens_large"] <- quantile(x,0.995,na.rm=T)
+    threshold["Zug_large"] <- quantile(x,0.995,na.rm=T)
+    
     if(varName %in% names(threshold))
       outlier <- (x>threshold[varName])
     else

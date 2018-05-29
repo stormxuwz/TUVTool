@@ -12,9 +12,8 @@ config <- list()
 
 config$BBE_name <- c("total","green","bluegreen","diatom")
 config$Seabird_name <- c("Seabird_temperature","DO","DOsat","conductivity","BAT","Spec.Cond")
-config$LOPC_name <- c("Zdens","Zug")
-config$varUnit <- c(
-	Seabird_temperature="Temperature (C)",
+config$LOPC_name <- c("Zdens","Zug", "Zug_small", "Zug_medium", "Zug_large","Zdens_small","Zdens_medium","Zdens_large")
+config$varUnit <- c(Seabird_temperature="Temperature (C)",
 	DO = "DO (mg/L)",
 	Spec.Cond = "Spec Cond (uS/cm)",
 	DOsat = "DO Sat (%)",
@@ -22,7 +21,13 @@ config$varUnit <- c(
 	Zdens = "Zooplankton Density (1/m^3)",
 	Zug = "Zooplankton Biomass (ug/m^3)",
 	BAT = "Beam Attenuation Coeff (1/m)",
-	density = "Density (kg/m^3)"
+	density = "Density (kg/m^3)",
+	Zdens_small = "Small Zooplankton Density (1/m^3)",
+	Zug_small = "Small Zooplankton Biomass (ug/m^3)",
+	Zdens_medium = "Medium Zooplankton Density (1/m^3)",
+	Zug_medium = "Medium Zooplankton Biomass (ug/m^3)",
+	Zdens_large = "Large Zooplankton Density (1/m^3)",
+	Zug_large = "Large Zooplankton Biomass (ug/m^3)"
 )
 config$factorColor <- colorFactor(c("blue4","white","red","blue","yellow","green","aquamarine","darkorange3","darkorchid4","lightpink1"),c(-1:8))
 
@@ -33,6 +38,7 @@ config$factorColor <- colorFactor(c("blue4","white","red","blue","yellow","green
 config$depth_distance_ratio <- 1
 config$nbrange <- 0.75
 
+config$ZugBins = list(all=10:128,small=10:50, medium=51:100, large=101:128)
 
 # Interpolation 
 config$maxdist <- 0.33

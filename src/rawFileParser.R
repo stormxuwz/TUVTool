@@ -73,15 +73,20 @@ LOPCFeature<-function(data){
     	averageSpeed=data$flowSpeed*0.0049*0.5 
     }
 
-   	LOPCname <- paste("BIN",10:128,sep="")
-    
-    dia <- seq(150,1920,15);
-    ovolm <- pi/6*dia^3/(2.585^2*10^6);
-    numSum <- rowSums(data[,LOPCname]);
-    density <- numSum/(averageSpeed*1000);
-    biomass <- as.matrix(data[,LOPCname])%*%ovolm/(averageSpeed*1000);
+   	LOPCResult = list()
+   	for(bin_ranges in c("all","small","medium","large")){
+   		LOPCBinName <- paste("BIN",config$Zug[[bin_ranges]],sep="")
+	    dia <- config$Zug[[bin_ranges]] * 15
+	    
+	    ovolm <- pi/6*dia^3/(2.585^2*10^6);
+	    numSum <- rowSums(data[,LOPCBinName]);
+	    density <- numSum/(averageSpeed*1000);
+	    biomass <- as.matrix(data[,LOPCBinName])%*%ovolm/(averageSpeed*1000);
 
-    return(list(density=density,biomass=biomass,flowSpeed=data$flowSpeed));
+	    LOPCResult[[bin_ranges]] = list(density=density, biomass=biomass)
+   	}
+   
+    return(list(LOPCResult=LOPCResult,flowSpeed=data$flowSpeed));
 }
 
 
@@ -263,8 +268,17 @@ readingRawFile <- function(filename){
 		data$Distance <- tmp$distance
 	}
 	LOPC_res <- LOPCFeature(data)
-	data$Zdens <- LOPC_res$density
-	data$Zug <- LOPC_res$biomass
+	
+	data$Zdens <- LOPC_res$LOPCResult[["all"]]$density
+	data$Zug <- LOPC_res$LOPCResult[["all"]]$biomass
+	
+	data$Zdens_small <- LOPC_res$LOPCResult[["small"]]$density
+	data$Zug_small <- LOPC_res$LOPCResult[["small"]]$biomass
+	data$Zdens_medium <- LOPC_res$LOPCResult[["medium"]]$density
+	data$Zug_medium <- LOPC_res$LOPCResult[["medium"]]$biomass
+	data$Zdens_large <- LOPC_res$LOPCResult[["large"]]$density
+	data$Zug_large <- LOPC_res$LOPCResult[["large"]]$biomass
+	
 	data$Spec.Cond <- data$cond/(1+0.02*(data$temp-25))
 	data <- subset(data,!is.na(data$depth))
 	print("Finish Parsing raw File")
