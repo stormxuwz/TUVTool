@@ -28,7 +28,12 @@ preprocessing <- function(Triaxus){
 	# print(summary(Triaxus@rawData))
 	geoData <- Triaxus@rawData[,c("latitude","longitude","distance","UTC")]
 	Seabird_data <- Triaxus@rawData[,c(Seabird_name,"Seabird_depth")]
-	LOPC_data <- Triaxus@rawData[,Triaxus@config$LOPC_name]
+	
+	if("Zug" %in% names(Triaxus@rawData)){
+		LOPC_data <- Triaxus@rawData[,c("Zug","Zdens")] # for back compatibility 
+	}else{
+		LOPC_data <- Triaxus@rawData[,Triaxus@config$LOPC_name]
+	}
 	Triaxus@cleanData <- cbind(geoData,Seabird_data,LOPC_data)
 	
 	n <- nrow(Triaxus@cleanData)
@@ -143,12 +148,11 @@ init_filter <- function(x,varName){
     threshold["Seabird_temperature"] <- 40
     threshold["Zdens"] <- quantile(x,0.995,na.rm=T)
     threshold["Zug"] <- quantile(x,0.995,na.rm=T)
-    threshold["Zdens_small"] <- quantile(x,0.995,na.rm=T)
-    threshold["Zug_small"] <- quantile(x,0.995,na.rm=T)
-    threshold["Zdens_medium"] <- quantile(x,0.995,na.rm=T)
-    threshold["Zug_medium"] <- quantile(x,0.995,na.rm=T)
-    threshold["Zdens_large"] <- quantile(x,0.995,na.rm=T)
-    threshold["Zug_large"] <- quantile(x,0.995,na.rm=T)
+    
+    for(zooplanktonBinName in names(config$ZugBins)){
+    	threshold[[paste0("Zdens_",zooplanktonBinName)]] <- quantile(x,0.995,na.rm=T)
+    	threshold[[paste0("Zug_",zooplanktonBinName)]] <- quantile(x,0.995,na.rm=T)
+    }
     
     if(varName %in% names(threshold))
       outlier <- (x>threshold[varName])
@@ -191,92 +195,3 @@ cal_density <- function(data){
 	density <- swRho(salinity,data$temperature,data$pressure,longitude = data$longitude,latitude = data$latitude)
 	return(data.frame(salinity = salinity, density = density))
 }
-
-
-# preprocessing_old <- function(Triaxus){
-
-# 	Triaxus@rawData <- initProcess(Triaxus@rawData,config$rename)
-	
-# 	BBE_name <- Triaxus@config$BBE_name
-# 	Seabird_name <- Triaxus@config$Seabird_name
-
-# 	geoData <- Triaxus@rawData[,c("latitude","longitude","distance","UTC")]
-# 	Seabird_data <- Triaxus@rawData[,c(Seabird_name,"Seabird_depth")]
-# 	BBE_data <- Triaxus@rawData[,c(BBE_name,"BBE_depth")]
-# 	LOPC_data <- Triaxus@rawData[,Triaxus@config$LOPC_name]
-
-# 	if(length(Triaxus@Seabird_cutoff)==1){
-# 		Triaxus@Seabird_cutoff=1:nrow(Triaxus@rawData)
-# 		Triaxus@BBE_cutoff=1:nrow(Triaxus@rawData)
-# 	}
-
-# 	# Cut off 
-# 	Seabird_data <- Seabird_data[Triaxus@Seabird_cutoff,]
-# 	geoData <- geoData[Triaxus@Seabird_cutoff,]
-# 	BBE_data <- BBE_data[Triaxus@BBE_cutoff,]
-
-# 	Triaxus@cleanData <- cbind(geoData,Seabird_data,LOPC_data)
-# 	Triaxus@cleanData[,BBE_name] <- NA
-
-# 	BBE_data <- na.omit(BBE_data)
-
-# 	if(nrow(BBE_data)==0){
-# 		# no BBE data at all
-# 		Seabird_separation <- depth_separation(Seabird_data$Seabird_depth)
-# 		Seabird_nodes <- Seabird_separation[[2]]
-# 		Triaxus@numCycle <- floor((length(Seabird_nodes)-1)/2)
-# 		Triaxus@cleanData$depth <- Triaxus@cleanData$Seabird_depth
-# 		Triaxus@cleanData$direction <- Seabird_separation[[1]]
-# 		return(Triaxus)
-# 	}	
-	
-# 	png("alignmentCheck.png")
-# 		plot(Seabird_data$Seabird_depth)
-# 		points(BBE_data$BBE_depth,col="blue")
-# 	dev.off()
-
-# 	# data alignment
-# 	Seabird_separation <- depth_separation(Seabird_data$Seabird_depth)
-# 	BBE_separation <- depth_separation(BBE_data$BBE_depth)
-
-# 	Seabird_nodes <- Seabird_separation[[2]]
-# 	BBE_nodes <- BBE_separation[[2]]
-
-# 	if(length(Seabird_nodes)!=length(BBE_nodes)){
-# 		warning("two seperation not the same")
-# 		stop("Can't allign,choose other cutoff parameter")
-# 	}
-
-# 	if(Seabird_separation[[1]][Seabird_nodes[1]]!=BBE_separation[[1]][BBE_nodes[1]]){
-# 		stop("Can't allign,choose other cutoff parameter")
-# 	}else{
-# 		# allign try to allign other parts
-# 	}
-
-# 	previousNode <- 1
-	
-# 	for(i in 2:length(Seabird_nodes)){
-# 		Seabird_DepthRange <- c(Seabird_nodes[previousNode]:Seabird_nodes[i])
-# 		BBE_DepthRange <- c(BBE_nodes[previousNode]:BBE_nodes[i])
-		
-# 		sourceDepth <- BBE_data$BBE_depth[BBE_DepthRange]
-# 		targetDepth <- Seabird_data$Seabird_depth[Seabird_DepthRange]
-		
-# 		sourceDataSet <- BBE_data[BBE_DepthRange,BBE_name]
-# 		Triaxus@cleanData[Seabird_DepthRange,BBE_name] <- linearAlignment(targetDepth,sourceDepth,sourceDataSet)
-# 		previousNode <- previousNode+1
-# 	}
-
-# 	Triaxus@cleanData$depth <- Triaxus@cleanData$Seabird_depth
-# 	Triaxus@cleanData$direction <- Seabird_separation[[1]]
-
-# 	finalStartNodes <- Seabird_nodes[2]
-# 	finalEndNodes <- Seabird_nodes[length(Seabird_nodes)-1]
-	
-# 	Triaxus@cleanData <- Triaxus@cleanData[finalStartNodes:finalEndNodes,]
-
-# 	Triaxus@numCycle <- floor((length(Seabird_nodes)-1)/2)
-
-# 	print(summary(Triaxus@cleanData))
-# 	return(Triaxus)
-# }

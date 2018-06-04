@@ -1,36 +1,7 @@
 library(dplyr)
 library(lubridate)
 require(sp)
-# readingRawFile <- function(filename){
-# 	# filename <- "/Users/WenzhaoXu/Developer/Triaxus/previous/LOPCData/NS_2013_HU6_HU7_2.dat"
-# 	lines <- strsplit(readLines(filename),"\\s+|,")
-# 	date <- lines[[2]][5,6,8]
-# 	date <- as.Date(paste(date,collapse = "_"),format = "%B_%d_%Y")
-# 	Seabird_idx <- sapply(lines,function(i) "S" %in% i & length(i) == 11)
-# 	Fluoroprobe_idx <- sapply(lines,function(i) "F" %in% i)
-# 	Phytoflash_idx <- sapply(lines,function(i) "C" %in% i)
-# 	geo_idx <- sapply(lines,function(i) "$GPGGA" %in% i & length(i)==15)
 
-# 	LOPC_L1_idx <- sapply(lines,function(i) "L1" %in% i)
-# 	LOPC_L2_idx <- sapply(lines,function(i) "L2" %in% i)
-# 	LOPC_L3_idx <- sapply(lines,function(i) "L3" %in% i)
-# 	LOPC_L4_idx <- sapply(lines,function(i) "L4" %in% i)
-# 	LOPC_L5_idx <- sapply(lines,function(i) "L5" %in% i)
-
-# 	SeabirdData <- apply((do.call(rbind,lines[Seabird_idx])[,-1]), 2,as.numeric)
-# 	Fluoroprobe <- apply((do.call(rbind,lines[Fluoroprobe_idx])[,-1]), 2,as.numeric)
-# 	Phytoflash <- (do.call(rbind,lines[Phytoflash_idx])[,-1])
-# 	# Phytoflash[,3:7] <- as.numeric(Phytoflash[,3:7])
-# 	geoData <- apply(do.call(rbind,lines[geo_idx])[,-1][,c(1,2,4)],2,as.numeric)
-# 	geoData[,3] <- -geoData[,3]
-
-# 	LOPC_L1  <- apply((do.call(rbind,lines[LOPC_L1_idx])[,-1]), 2,as.numeric)
-# 	LOPC_L2  <- apply((do.call(rbind,lines[LOPC_L2_idx])[,-1]), 2,as.numeric)
-# 	LOPC_L3  <- apply((do.call(rbind,lines[LOPC_L3_idx])[,-1]), 2,as.numeric)
-# 	LOPC_L4  <- apply((do.call(rbind,lines[LOPC_L4_idx])[,-1]), 2,as.numeric)
-# 	LOPC_L5  <- apply((do.call(rbind,lines[LOPC_L5_idx])[,-1]), 2,as.numeric)
-# 	LOPC <- do.call(cbind,c(LOPC_L1,LOPC_L2,LOPC_L3,LOPC_L4,LOPC_L5))
-# }
 
 lonlatTransform <- function(x){
 	y <- as.numeric(substr(x,1,2))+as.numeric(substr(x,3,7))/60
@@ -74,7 +45,7 @@ LOPCFeature<-function(data){
     }
 
    	LOPCResult = list()
-   	for(bin_ranges in c("all","small","medium","large")){
+   	for(bin_ranges in names(config$ZugBins)){
    		LOPCBinName <- paste("BIN",config$Zug[[bin_ranges]],sep="")
 	    dia <- config$Zug[[bin_ranges]] * 15
 	    
@@ -269,15 +240,11 @@ readingRawFile <- function(filename){
 	}
 	LOPC_res <- LOPCFeature(data)
 	
-	data$Zdens <- LOPC_res$LOPCResult[["all"]]$density
-	data$Zug <- LOPC_res$LOPCResult[["all"]]$biomass
-	
-	data$Zdens_small <- LOPC_res$LOPCResult[["small"]]$density
-	data$Zug_small <- LOPC_res$LOPCResult[["small"]]$biomass
-	data$Zdens_medium <- LOPC_res$LOPCResult[["medium"]]$density
-	data$Zug_medium <- LOPC_res$LOPCResult[["medium"]]$biomass
-	data$Zdens_large <- LOPC_res$LOPCResult[["large"]]$density
-	data$Zug_large <- LOPC_res$LOPCResult[["large"]]$biomass
+	for(zooplanktonBinName in names(config$ZugBins)){
+		data[[paste0("Zdens_",zooplanktonBinName)]] <- LOPC_res$LOPCResult[[zooplanktonBinName]]$density
+		data[[paste0("Zug_",zooplanktonBinName)]] <- LOPC_res$LOPCResult[[zooplanktonBinName]]$biomass
+	}
+
 	
 	data$Spec.Cond <- data$cond/(1+0.02*(data$temp-25))
 	data <- subset(data,!is.na(data$depth))
