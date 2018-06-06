@@ -63,3 +63,10 @@ Different paths can be combined into a list to perform cluster analysis
 	plot_2d(myTriaxus,var= "Seabird_Temperature")
 	plot_hotspot (myTriaxus,var= "Seabird_Temperature")
 	plot_raw (myTriaxus,var= "Seabird_Temperature")
+
+
+
+If only to parse the raw Triaxus file, there is a function in ./src/rawFileParser.R, readingRawFile. so 
+
+	source("./src/rawFileParser.R")	
+	df = readingRawFile("triaxusFile.dat") # df is a data frame containing the parsed triaxus data
