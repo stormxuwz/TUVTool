@@ -30,20 +30,21 @@ where
 
 *	config: list defined in config.R
 *	newFile: newfile name, can take .dat LOPC rawfile or csv file (sample file can be downloaded here [link](https://www.dropbox.com/sh/jezabaryohpfdnf/AABCzXVb0AVOPhRmDVgX538-a?dl=0))
-*	seabirdIndex, bbeIndex:  the index of seabird data and bbe data that represents the same valley points. Need to determine manually 
-*	seabird_cutoff:  a vector contains the start and end index for the
-*	separate: whether to separate upcast and downcast before analyzing
-*	rawData: bind data to the class rather than reading the data. If set, no reading file is performed
+*	seabirdIndex, bbeIndex:  the index of seabird data and bbe data that represents the same valley points. Need to determine manually. In the newer dataset, the synchronization issues between Seabird and BBE points are solved, so setting seabirdIndex = bbeIndex = 1 should be fine.
+*	seabird_cutoff:  a vector contains the start and end index, for controlling the range of the data to be analyzed. 
+*	separate: Whether to separate upcast and downcast before analyzing
+*	rawData: Input data to the Triaxus object rather than reading the data. If set, no reading file is performed
 *	realName: for web app only since the file uploaded may not preserve the original name
 	
 To interpolate:
 
 	myTriaxus <- preprocessing(myTriaxus) %>% interpolation_main(int_method="krige",det_method="tps") %>% hotspot_main() 
 	
-"%>%" is the pipeline operation. The preprocessing, interpolation_main and hotspot_main will take Triaxus class as the first input.
+"%>%" is the pipeline operation. The preprocessing, interpolation_main and hotspot_main will take Triaxus class as the first input. 
+Different paths can be combined into a list to perform cluster analysis
 
 
-	allTriaxus <- list(myTriaxus)
+	allTriaxus <- list(myTriaxus) # allTriaxus is a list
 	
 	# To clustering
 	# variableForClustering: which variable considered in cluster analysis
