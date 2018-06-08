@@ -143,7 +143,10 @@ readingRawFile <- function(filename){
 			Phytoflash_Line <- line[-1]
 			PhytoflashCount <- PhytoflashCount+1
 		}
-		else if("$GPGGA" %in% line && length(line) == 13){ # previous format is 15
+		else if("$GPGGA" %in% line){
+			if(length(line)!=15){
+				warning("GPGGA line length not equal to pre-specified value")
+			}
 			geo_Line <- line[-1][c(1,2,4)]
 			geoCount <- geoCount+1
 		}
