@@ -106,7 +106,10 @@ readingRawFile <- function(filename){
 
 	for(line in lines){
 		# Seabird Data
-		if("L1" %in% line){
+		if(length(line) == 0){
+			next
+		}
+		if(line[1] == "L1"){
 			if(completeLOPC){
 				# if all LOPC data are collected, save the data
 				data[[i]] <- c(geo_Line,Seabird_line,Fluoroprobe_Line,Phytoflash_Line,LOPC_line)
@@ -116,39 +119,41 @@ readingRawFile <- function(filename){
 			LOPC_line <- rep(0, num_LOPC_values)
 			LOPC_line[1:32] <- as.numeric(line[-1])
 		}
-		else if("L2" %in% line){
+		else if("L2" == line[1]){
 			LOPC_line[33:64] <- as.numeric(line[-1])
 		}
-		else if("L3" %in% line){
+		else if("L3" == line[1]){
 			LOPC_line[65:96] <- as.numeric(line[-1])
 		}
-		else if("L4" %in% line){
+		else if("L4" == line[1]){
 			LOPC_line[97:128] <- as.numeric(line[-1])
 		}
-		else if("L5" %in% line){
+		else if("L5" == line[1]){
 			LOPC_line[130:num_LOPC_values] = as.numeric(line[-1])
 			LOPCCount <- LOPCCount+1
 			completeLOPC <- TRUE
 		}
-		else if("S" %in% line && length(line) == (num_Seabird_values + 1) ){ 
+		else if("S" == line[1] && length(line) == (num_Seabird_values + 1) ){ 
 			# update Seabird as frequently as possible
 			Seabird_line <- line[-1]
 			SeabirdCount <- SeabirdCount+1
 		}
-		else if("F" %in% line && length(line) == (num_Fluoroprobe_values + 1)){
+		else if("F" == line[1] && length(line) == (num_Fluoroprobe_values + 1)){
 			Fluoroprobe_Line <- line[-1]
 			FluoroprobeCount <- FluoroprobeCount+1
 		}
-		else if("C" %in% line && length(line) == (num_Phytoflash_values + 1)){
+		else if("C" == line[1] && length(line) == (num_Phytoflash_values + 1)){
 			Phytoflash_Line <- line[-1]
 			PhytoflashCount <- PhytoflashCount+1
 		}
-		else if("$GPGGA" %in% line){
-			if(length(line)!=15){
-				warning("GPGGA line length not equal to pre-specified value")
+		else if("$GPGGA" == line[1]){
+			if(line[4] %in% c("N","S") && line[6] %in% c("W","E")){
+				geo_Line <- line[-1][c(1,2,4)]
+				geoCount <- geoCount+1
+			}else{
+				warning("GPGGA line is corrupted")
+				print(line)
 			}
-			geo_Line <- line[-1][c(1,2,4)]
-			geoCount <- geoCount+1
 		}
 
 		# adding MEP line parsing, 11/22
