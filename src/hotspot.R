@@ -29,6 +29,7 @@ hotspot_main <- function(Triaxus){
         Triaxus@hotspotData[,var] <- hotspot_index
     }
 
+    print("hotspot analysis finished")
     return(Triaxus)
 }
 
